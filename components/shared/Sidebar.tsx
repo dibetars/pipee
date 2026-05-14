@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useTransition } from 'react'
+import { useTransition, useState, useEffect } from 'react'
 import { cn, initials } from '@/lib/utils'
 import { logout } from '@/lib/actions/auth'
 import type { Profile } from '@/types'
@@ -16,15 +16,19 @@ import {
   ChevronRight,
   Loader2,
   BookOpen,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { href: '/dashboard',   label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/pipeline',    label: 'Pipeline',  icon: Columns3 },
-  { href: '/opportunities', label: 'All Deals', icon: List },
-  { href: '/calendar',    label: 'Calendar',  icon: CalendarDays },
-  { href: '/walkthrough', label: 'Get Started', icon: BookOpen },
+  { href: '/dashboard',     label: 'Dashboard',  icon: LayoutDashboard },
+  { href: '/pipeline',      label: 'Pipeline',   icon: Columns3 },
+  { href: '/opportunities', label: 'All Deals',  icon: List },
+  { href: '/calendar',      label: 'Calendar',   icon: CalendarDays },
+  { href: '/walkthrough',   label: 'Get Started', icon: BookOpen },
 ]
+
+const STORAGE_KEY = 'krongage-sidebar-collapsed'
 
 interface SidebarProps {
   profile: Profile
@@ -33,6 +37,23 @@ interface SidebarProps {
 export function Sidebar({ profile }: SidebarProps) {
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
+  const [collapsed, setCollapsed] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // Hydrate from localStorage on mount only
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored === 'true') setCollapsed(true)
+    setMounted(true)
+  }, [])
+
+  function toggleCollapsed() {
+    setCollapsed(c => {
+      const next = !c
+      localStorage.setItem(STORAGE_KEY, String(next))
+      return next
+    })
+  }
 
   function handleLogout() {
     startTransition(async () => {
@@ -40,73 +61,136 @@ export function Sidebar({ profile }: SidebarProps) {
     })
   }
 
+  // Prevent layout flash before hydration — render expanded server-side
+  const isCollapsed = mounted && collapsed
+
   return (
-    <aside className="flex flex-col w-60 shrink-0 bg-white border-r border-slate-200 h-full">
-      {/* Brand */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-200">
+    <aside
+      className={cn(
+        'flex flex-col shrink-0 bg-white border-r border-slate-200 h-full transition-all duration-200 ease-in-out',
+        isCollapsed ? 'w-16' : 'w-60'
+      )}
+    >
+      {/* Brand + toggle */}
+      <div
+        className={cn(
+          'flex items-center border-b border-slate-200 px-3 py-[18px]',
+          isCollapsed ? 'justify-center' : 'gap-3 px-5'
+        )}
+      >
+        {/* Logo mark */}
         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-600 shrink-0">
           <span className="text-white font-bold text-sm">K</span>
         </div>
-        <div>
-          <p className="text-gray-900 font-semibold text-sm leading-none">Krongage BD</p>
-          <p className="text-gray-400 text-xs mt-0.5">Pipeline</p>
-        </div>
+
+        {/* Word mark — hidden when collapsed */}
+        {!isCollapsed && (
+          <div className="flex-1 min-w-0">
+            <p className="text-gray-900 font-semibold text-sm leading-none">Krongage BD</p>
+            <p className="text-gray-400 text-xs mt-0.5">Pipeline</p>
+          </div>
+        )}
+
+        {/* Collapse toggle — repositioned when collapsed */}
+        <button
+          onClick={toggleCollapsed}
+          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className={cn(
+            'text-gray-400 hover:text-gray-700 transition-colors rounded-md p-0.5',
+            isCollapsed && 'absolute left-3 bottom-[72px]'  // floats near user row when collapsed
+          )}
+        >
+          {isCollapsed
+            ? <PanelLeftOpen  size={16} />
+            : <PanelLeftClose size={16} />
+          }
+        </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <nav className={cn('flex-1 py-4 space-y-0.5 overflow-y-auto', isCollapsed ? 'px-2' : 'px-3')}>
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
           return (
             <Link
               key={href}
               href={href}
+              title={isCollapsed ? label : undefined}
               className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                'flex items-center rounded-lg text-sm font-medium transition-colors',
+                isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2',
                 active
                   ? 'bg-indigo-50 text-indigo-600'
                   : 'text-gray-500 hover:bg-slate-100 hover:text-gray-800'
               )}
             >
-              <Icon size={16} />
-              {label}
-              {active && <ChevronRight size={12} className="ml-auto opacity-60" />}
+              <Icon size={16} className="shrink-0" />
+              {!isCollapsed && (
+                <>
+                  <span>{label}</span>
+                  {active && <ChevronRight size={12} className="ml-auto opacity-60" />}
+                </>
+              )}
             </Link>
           )
         })}
 
-        {profile.role === 'admin' && (
-          <Link
-            href="/admin"
-            className={cn(
-              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              pathname.startsWith('/admin')
-                ? 'bg-indigo-50 text-indigo-600'
-                : 'text-gray-500 hover:bg-slate-100 hover:text-gray-800'
-            )}
-          >
-            <Users size={16} />
-            Admin
-            {pathname.startsWith('/admin') && <ChevronRight size={12} className="ml-auto opacity-60" />}
-          </Link>
-        )}
+        {profile.role === 'admin' && (() => {
+          const active = pathname.startsWith('/admin')
+          return (
+            <Link
+              href="/admin"
+              title={isCollapsed ? 'Admin' : undefined}
+              className={cn(
+                'flex items-center rounded-lg text-sm font-medium transition-colors',
+                isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2',
+                active
+                  ? 'bg-indigo-50 text-indigo-600'
+                  : 'text-gray-500 hover:bg-slate-100 hover:text-gray-800'
+              )}
+            >
+              <Users size={16} className="shrink-0" />
+              {!isCollapsed && (
+                <>
+                  <span>Admin</span>
+                  {active && <ChevronRight size={12} className="ml-auto opacity-60" />}
+                </>
+              )}
+            </Link>
+          )
+        })()}
       </nav>
 
-      {/* User */}
-      <div className="px-3 py-3 border-t border-slate-200">
-        <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs text-white font-semibold shrink-0">
+      {/* User row */}
+      <div className={cn('border-t border-slate-200', isCollapsed ? 'px-2 py-3' : 'px-3 py-3')}>
+        <div
+          className={cn(
+            'flex items-center',
+            isCollapsed ? 'flex-col gap-2' : 'gap-3 px-3 py-2'
+          )}
+        >
+          {/* Avatar */}
+          <div
+            title={isCollapsed ? profile.name : undefined}
+            className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs text-white font-semibold shrink-0"
+          >
             {initials(profile.name)}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-gray-800 text-sm font-medium truncate">{profile.name}</p>
-            <p className="text-gray-400 text-xs truncate capitalize">{profile.role.replace('_', ' ')}</p>
-          </div>
+
+          {/* Name + role — hidden when collapsed */}
+          {!isCollapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-gray-800 text-sm font-medium truncate">{profile.name}</p>
+              <p className="text-gray-400 text-xs truncate capitalize">{profile.role.replace('_', ' ')}</p>
+            </div>
+          )}
+
+          {/* Logout */}
           <button
             onClick={handleLogout}
             disabled={isPending}
-            className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
             title="Sign out"
+            className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
           >
             {isPending ? <Loader2 size={15} className="animate-spin" /> : <LogOut size={15} />}
           </button>

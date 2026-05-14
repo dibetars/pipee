@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, X, Search, Loader2 } from 'lucide-react'
 import { createOpportunity } from '@/lib/actions/opportunities'
+import { CURRENCIES } from '@/types'
 import type { Profile, Sector } from '@/types'
 
 interface TopNavProps {
@@ -92,8 +93,16 @@ export function TopNav({ title, profile, sectors = [], profiles = [] }: TopNavPr
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Deal Value (GHS)</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Deal Value</label>
                   <input name="value" type="number" min="0" placeholder="e.g. 50000" className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Currency</label>
+                  <select name="currency" defaultValue="GHS" className={inputCls}>
+                    {CURRENCIES.map(c => (
+                      <option key={c.code} value={c.code}>{c.symbol} {c.name}</option>
+                    ))}
+                  </select>
                 </div>
                 {profile.role === 'admin' && profiles.length > 0 && (
                   <div className="col-span-2">

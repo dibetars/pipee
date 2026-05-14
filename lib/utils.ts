@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { STAGE_META } from '@/types'
+import { STAGE_META, CURRENCIES } from '@/types'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -8,7 +8,9 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatCurrency(value: number | null, currency = 'GHS') {
   if (value === null) return '—'
-  return new Intl.NumberFormat('en-GH', {
+  const def = CURRENCIES.find(c => c.code === currency)
+  const locale = def?.locale ?? 'en-GH'
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
     maximumFractionDigits: 0,

@@ -2,7 +2,10 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { TopNav } from '@/components/shared/TopNav'
 import { UserManagement } from '@/components/admin/UserManagement'
+import { ReportBuilder } from '@/components/admin/ReportBuilder'
+import { AdminSettings } from '@/components/admin/AdminSettings'
 import { upsertSectorAction } from '@/lib/actions/admin'
+import { getApiKey } from '@/lib/actions/reports'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -17,6 +20,8 @@ export default async function AdminPage() {
 
   if (!profile || profile.role !== 'admin') redirect('/dashboard')
 
+  const grokKeySet = !!(await getApiKey('groq_api_key'))
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <TopNav title="Admin" profile={profile} />
@@ -24,12 +29,21 @@ export default async function AdminPage() {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-6 py-6 space-y-8">
 
-          {/* User Management */}
+          {/* ── User Management ── */}
           <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
             <UserManagement profiles={profiles ?? []} />
           </div>
 
-          {/* Sector Management */}
+          {/* ── Report Builder ── */}
+          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+            <div className="mb-5">
+              <h2 className="text-gray-900 font-semibold">Report Builder</h2>
+              <p className="text-gray-400 text-sm">Generate AI-powered reports filtered by BDO, stage, status, or date range</p>
+            </div>
+            <ReportBuilder profiles={profiles ?? []} />
+          </div>
+
+          {/* ── Sector Management ── */}
           <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-5">
               <div>
@@ -53,7 +67,6 @@ export default async function AdminPage() {
               ))}
             </div>
 
-            {/* Add sector form */}
             <form action={upsertSectorAction} className="mt-4 flex gap-3">
               <input name="name" required placeholder="New sector name"
                 className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
@@ -62,6 +75,15 @@ export default async function AdminPage() {
                 Add Sector
               </button>
             </form>
+          </div>
+
+          {/* ── Admin Settings ── */}
+          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+            <div className="mb-5">
+              <h2 className="text-gray-900 font-semibold">Settings</h2>
+              <p className="text-gray-400 text-sm">API keys and integrations</p>
+            </div>
+            <AdminSettings grokKeySet={grokKeySet} />
           </div>
 
         </div>

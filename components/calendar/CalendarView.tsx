@@ -4,12 +4,12 @@ import { useState, useMemo } from 'react'
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   eachDayOfInterval, format, isSameMonth, isSameDay, isToday,
-  addMonths, subMonths, addWeeks, subWeeks, parseISO,
+  addMonths, subMonths, addWeeks, subWeeks,
 } from 'date-fns'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, ChevronRight, Calendar as CalIcon } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar as CalIcon, MapPin, Video, Clock, ClipboardList } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Opportunity } from '@/types'
+import type { Opportunity, CalendarEventType } from '@/types'
 
 // ─── Stage colours (bg / text) ────────────────────────────────────────────────
 const STAGE_CHIP: Record<number, { bg: string; text: string; dot: string }> = {
@@ -22,6 +22,14 @@ const STAGE_CHIP: Record<number, { bg: string; text: string; dot: string }> = {
   7: { bg: 'bg-emerald-100',text: 'text-emerald-800',dot: 'bg-emerald-600' },
 }
 
+// ─── Event type meta ─────────────────────────────────────────────────────────
+const EVENT_TYPE_META: Record<CalendarEventType, { icon: React.ElementType; label: string; chip: string }> = {
+  action:           { icon: ClipboardList, label: 'Action',           chip: '' },
+  meeting_physical: { icon: MapPin,        label: 'Physical Meeting', chip: 'bg-violet-100 text-violet-700 border-violet-200' },
+  meeting_online:   { icon: Video,         label: 'Online Meeting',   chip: 'bg-blue-100 text-blue-700 border-blue-200'       },
+  deadline:         { icon: Clock,         label: 'Deadline',         chip: 'bg-red-100 text-red-700 border-red-200'          },
+}
+
 type View = 'month' | 'week' | 'agenda'
 const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -31,6 +39,7 @@ interface CalEvent {
   company: string
   date: Date
   stage: number
+  eventType: CalendarEventType
   opp: Opportunity
 }
 
@@ -42,18 +51,28 @@ interface CalendarViewProps {
 function EventChip({
   event, compact = false, onClick,
 }: { event: CalEvent; compact?: boolean; onClick: () => void }) {
-  const col = STAGE_CHIP[event.stage] ?? STAGE_CHIP[1]
+  const col  = STAGE_CHIP[event.stage] ?? STAGE_CHIP[1]
+  const meta = EVENT_TYPE_META[event.eventType] ?? EVENT_TYPE_META.action
+  const Icon = meta.icon
+
+  // Deadlines get a red left-border override; meetings get icons
+  const isDeadline = event.eventType === 'deadline'
+  const isMeeting  = event.eventType === 'meeting_physical' || event.eventType === 'meeting_online'
+
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick() }}
       className={cn(
         'flex items-center gap-1.5 w-full text-left rounded-md px-1.5 py-0.5 truncate transition-opacity hover:opacity-80',
-        col.bg,
+        isDeadline ? 'bg-red-50 border border-red-200' : col.bg,
         compact ? 'text-[10px]' : 'text-xs'
       )}
     >
-      <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', col.dot)} />
-      <span className={cn('truncate font-medium', col.text)}>
+      {isMeeting || isDeadline
+        ? <Icon size={compact ? 9 : 11} className={cn('shrink-0', isDeadline ? 'text-red-500' : col.text)} />
+        : <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', col.dot)} />
+      }
+      <span className={cn('truncate font-medium', isDeadline ? 'text-red-700' : col.text)}>
         {compact ? event.company : `${event.company}: ${event.opp.next_action ?? 'Follow up'}`}
       </span>
     </button>
@@ -293,25 +312,36 @@ function AgendaView({ events }: { events: CalEvent[] }) {
             {/* Events */}
             <div className="flex-1 py-2 px-4 space-y-2">
               {evts.map(evt => {
-                const col = STAGE_CHIP[evt.stage] ?? STAGE_CHIP[1]
+                const col  = STAGE_CHIP[evt.stage] ?? STAGE_CHIP[1]
+                const meta = EVENT_TYPE_META[evt.eventType] ?? EVENT_TYPE_META.action
+                const Icon = meta.icon
+                const isDeadline = evt.eventType === 'deadline'
                 return (
                   <button
                     key={evt.id}
                     onClick={() => router.push(`/opportunities/${evt.id}`)}
-                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-slate-100 bg-white hover:border-blue-200 hover:bg-blue-50/40 transition-colors text-left group"
+                    className={cn(
+                      'w-full flex items-center gap-3 px-3 py-3 rounded-xl border bg-white hover:bg-blue-50/40 transition-colors text-left group',
+                      isDeadline ? 'border-red-200 hover:border-red-300' : 'border-slate-100 hover:border-blue-200'
+                    )}
                   >
-                    <span className={cn('w-2.5 h-2.5 rounded-full shrink-0', col.dot)} />
+                    <div className={cn(
+                      'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
+                      isDeadline ? 'bg-red-50' : col.bg
+                    )}>
+                      <Icon size={14} className={isDeadline ? 'text-red-500' : col.text} />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-800 truncate">
                         {evt.opp.next_action ?? 'Follow up'}
                       </p>
                       <p className="text-xs text-gray-400 truncate mt-0.5">
-                        {evt.company}
+                        {evt.company} · <span className="text-gray-500">{meta.label}</span>
                       </p>
                     </div>
                     <span className={cn(
                       'text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0',
-                      col.bg, col.text
+                      isDeadline ? 'bg-red-100 text-red-700' : `${col.bg} ${col.text}`
                     )}>
                       Stage {evt.stage}
                     </span>
@@ -352,20 +382,31 @@ function DayPanel({
             <p className="text-xs text-center">No actions on this day</p>
           </div>
         ) : dayEvts.map(evt => {
-          const col = STAGE_CHIP[evt.stage] ?? STAGE_CHIP[1]
+          const col  = STAGE_CHIP[evt.stage] ?? STAGE_CHIP[1]
+          const meta = EVENT_TYPE_META[evt.eventType] ?? EVENT_TYPE_META.action
+          const Icon = meta.icon
+          const isDeadline = evt.eventType === 'deadline'
           return (
             <button
               key={evt.id}
               onClick={() => router.push(`/opportunities/${evt.id}`)}
-              className="w-full flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/40 transition-colors text-left"
+              className={cn(
+                'w-full flex items-start gap-3 p-3 rounded-xl border hover:bg-blue-50/40 transition-colors text-left',
+                isDeadline ? 'border-red-200 bg-red-50/20' : 'border-slate-100 hover:border-blue-200'
+              )}
             >
-              <span className={cn('w-2 h-2 rounded-full shrink-0 mt-1.5', col.dot)} />
+              <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5', isDeadline ? 'bg-red-100' : col.bg)}>
+                <Icon size={13} className={isDeadline ? 'text-red-500' : col.text} />
+              </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800">{evt.opp.next_action ?? 'Follow up'}</p>
                 <p className="text-xs text-gray-400 truncate mt-0.5">{evt.company}</p>
-                <span className={cn('inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded-full mt-1.5', col.bg, col.text)}>
-                  Stage {evt.stage}
-                </span>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className={cn('text-[10px] font-semibold px-1.5 py-0.5 rounded-full', isDeadline ? 'bg-red-100 text-red-700' : `${col.bg} ${col.text}`)}>
+                    Stage {evt.stage}
+                  </span>
+                  <span className="text-[10px] text-gray-400">{meta.label}</span>
+                </div>
               </div>
             </button>
           )
@@ -423,6 +464,7 @@ export function CalendarView({ opportunities }: CalendarViewProps) {
         company: o.company_name,
         date: new Date(o.next_action_date!),
         stage: o.stage,
+        eventType: (o.calendar_event_type ?? 'action') as CalendarEventType,
         opp: o,
       })),
     [opportunities]

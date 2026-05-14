@@ -3,8 +3,20 @@ export type OpportunityStatus = 'active' | 'stalled' | 'won' | 'lost' | 'disqual
 export type DisqualificationReason = 'NO_FIT' | 'NO_PAIN' | 'NO_BUDGET' | 'NO_AUTHORITY' | 'NO_TIMELINE' | 'COMPETITOR'
 export type ContactRole = 'champion' | 'economic_buyer' | 'stakeholder' | 'other'
 export type ActivityType = 'call' | 'email' | 'meeting' | 'note' | 'stage_change' | 'outreach'
+export type MeetingSubtype = 'physical' | 'online'
+export type CalendarEventType = 'action' | 'meeting_physical' | 'meeting_online' | 'deadline'
 export type ProposalStatus = 'draft' | 'submitted' | 'accepted' | 'rejected'
 export type OutreachChannel = 'email' | 'linkedin' | 'phone' | 'other'
+
+// ── Currencies ────────────────────────────────────────────────────────────────
+export interface Currency { code: string; symbol: string; name: string; locale: string }
+export const CURRENCIES: Currency[] = [
+  { code: 'GHS', symbol: 'GH₵', name: 'Ghana Cedi',     locale: 'en-GH' },
+  { code: 'USD', symbol: '$',    name: 'US Dollar',      locale: 'en-US' },
+  { code: 'EUR', symbol: '€',    name: 'Euro',           locale: 'de-DE' },
+  { code: 'GBP', symbol: '£',    name: 'British Pound',  locale: 'en-GB' },
+  { code: 'NGN', symbol: '₦',    name: 'Nigerian Naira', locale: 'en-NG' },
+]
 
 export interface Profile {
   id: string
@@ -30,6 +42,7 @@ export interface Opportunity {
   disqualification_reason: DisqualificationReason | null
   next_action: string | null
   next_action_date: string | null
+  calendar_event_type: CalendarEventType
   stage_entered_at: string
   notes: string | null
   created_at: string
@@ -75,6 +88,7 @@ export interface Activity {
   outcome: string | null
   occurred_at: string
   created_at: string
+  meeting_subtype: MeetingSubtype | null
   profiles?: Profile
 }
 

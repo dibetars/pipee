@@ -9,6 +9,8 @@ import { MEDDICScorecard } from '@/components/opportunities/MEDDICScorecard'
 import { ActivityFeed } from '@/components/opportunities/ActivityFeed'
 import { DiscoveryBriefForm } from '@/components/opportunities/DiscoveryBriefForm'
 import { ProposalTracker } from '@/components/opportunities/ProposalTracker'
+import { StageNotifications } from '@/components/opportunities/StageNotifications'
+import { EditDealButton } from '@/components/opportunities/EditDealButton'
 import { formatCurrency, formatDate, isStalled, daysSinceStageEntry } from '@/lib/utils'
 import { STAGE_META } from '@/types'
 import { AlertTriangle, Globe, Building2, Calendar, DollarSign } from 'lucide-react'
@@ -28,6 +30,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
     { data: proposals },
     { data: contacts },
     { data: sectors },
+    { data: profiles },
   ] = await Promise.all([
     supabase.from('opportunities').select('*, profiles(*)').eq('id', id).single(),
     supabase.from('profiles').select('*').eq('id', user.id).single(),
@@ -37,6 +40,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
     supabase.from('proposals').select('*').eq('opportunity_id', id).order('version'),
     supabase.from('contacts').select('*').eq('opportunity_id', id),
     supabase.from('sectors').select('*'),
+    supabase.from('profiles').select('*').eq('is_active', true),
   ])
 
   if (!opp || !profile) notFound()
@@ -73,7 +77,13 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-3 shrink-0">
+                <EditDealButton
+                  opportunity={opp}
+                  profiles={profiles ?? []}
+                  sectors={sectors ?? []}
+                  currentUserRole={profile.role}
+                />
                 {opp.value && (
                   <div className="text-right">
                     <p className="text-green-600 text-xl font-bold">{formatCurrency(opp.value, opp.currency)}</p>
@@ -82,6 +92,11 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Stage notifications */}
+          <div className="mb-4">
+            <StageNotifications opportunity={opp} meddic={meddic} />
           </div>
 
           {/* Stage progress */}
