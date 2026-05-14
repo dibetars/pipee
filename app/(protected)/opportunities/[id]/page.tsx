@@ -5,6 +5,7 @@ import { TopNav } from '@/components/shared/TopNav'
 import { StageTag } from '@/components/shared/StageTag'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { StageProgress } from '@/components/opportunities/StageProgress'
+import { SubStageChecklist } from '@/components/opportunities/SubStageChecklist'
 import { MEDDICScorecard } from '@/components/opportunities/MEDDICScorecard'
 import { ActivityFeed } from '@/components/opportunities/ActivityFeed'
 import { DiscoveryBriefForm } from '@/components/opportunities/DiscoveryBriefForm'
@@ -31,6 +32,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
     { data: contacts },
     { data: sectors },
     { data: profiles },
+    { data: subStageProgress },
   ] = await Promise.all([
     supabase.from('opportunities').select('*, profiles(*)').eq('id', id).single(),
     supabase.from('profiles').select('*').eq('id', user.id).single(),
@@ -41,6 +43,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
     supabase.from('contacts').select('*').eq('opportunity_id', id),
     supabase.from('sectors').select('*'),
     supabase.from('profiles').select('*').eq('is_active', true),
+    supabase.from('sub_stage_progress').select('*').eq('opportunity_id', id),
   ])
 
   if (!opp || !profile) notFound()
@@ -99,13 +102,22 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
             <StageNotifications opportunity={opp} meddic={meddic} />
           </div>
 
-          {/* Stage progress */}
-          <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6 shadow-sm">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Stage Progress</p>
-            <StageProgress opportunity={opp} />
-            {stageMeta && (
-              <p className="text-gray-400 text-xs mt-3">{stageMeta.purpose}</p>
-            )}
+          {/* Stage progress + sub-stage checklist */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6 shadow-sm space-y-5">
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Stage Progress</p>
+              <StageProgress opportunity={opp} completedProgress={subStageProgress ?? []} />
+              {stageMeta && (
+                <p className="text-gray-400 text-xs mt-3">{stageMeta.purpose}</p>
+              )}
+            </div>
+            <div className="border-t border-slate-100 pt-4">
+              <SubStageChecklist
+                opportunityId={id}
+                stage={opp.stage}
+                completedProgress={subStageProgress ?? []}
+              />
+            </div>
           </div>
 
           {/* Meta cards */}

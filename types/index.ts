@@ -137,6 +137,72 @@ export interface Sector {
   created_at: string
 }
 
+// ── Sub-stage tracking ────────────────────────────────────────────────────────
+export interface SubStageItem {
+  key: string        // e.g. '1a', '2c'
+  label: string      // short display name
+  description: string
+  required: boolean  // must be complete before advancing
+}
+
+export interface SubStageProgress {
+  id: string
+  opportunity_id: string
+  sub_stage_key: string
+  completed_at: string
+  completed_by: string | null
+}
+
+export const SUB_STAGES: Record<number, SubStageItem[]> = {
+  1: [
+    { key: '1a', label: 'Prospect researched',       description: 'Company profiled and confirmed as ICP-fit before outreach begins', required: false },
+    { key: '1b', label: 'First outreach sent',        description: 'Contacted through channel 1 (email, LinkedIn, phone, etc.)', required: true  },
+    { key: '1c', label: 'Second outreach sent',       description: 'Follow-up through a different channel to demonstrate persistence', required: true  },
+    { key: '1d', label: 'Response received',          description: 'Prospect responded or expressed interest in a conversation', required: true  },
+    { key: '1e', label: 'Contact details recorded',   description: 'Name, title, role, and preferred contact channel logged under Contacts', required: true  },
+  ],
+  2: [
+    { key: '2a', label: 'Intro meeting booked',       description: 'First qualifying call or meeting scheduled with the prospect', required: true  },
+    { key: '2b', label: 'MEDDIC scorecard filled',    description: 'All qualifying dimensions assessed — score must reach ≥4 to advance', required: true  },
+    { key: '2c', label: 'Identified Pain confirmed',  description: 'Core business problem documented in the MEDDIC scorecard', required: true  },
+    { key: '2d', label: 'Economic Buyer named',       description: 'Person who controls the budget and signs the deal identified', required: true  },
+    { key: '2e', label: 'Discovery meeting scheduled', description: 'Next deep-dive session booked with the named decision-maker', required: true  },
+  ],
+  3: [
+    { key: '3a', label: 'Discovery meeting held',     description: 'In-depth session completed to diagnose the prospect\'s problem', required: true  },
+    { key: '3b', label: 'Pain points documented',     description: 'Specific challenges and business impact captured in the Discovery Brief', required: true  },
+    { key: '3c', label: 'Success criteria agreed',    description: 'Prospect confirmed what a successful outcome looks like for them', required: true  },
+    { key: '3d', label: 'Discovery Brief filed',      description: 'Brief completed and submitted for Solutions Lead review', required: true  },
+    { key: '3e', label: 'Demo date confirmed',        description: 'Demonstration or presentation date agreed and blocked in the calendar', required: true  },
+  ],
+  4: [
+    { key: '4a', label: 'Demo delivered',             description: 'Tailored Krongage solution demonstration presented to stakeholders', required: true  },
+    { key: '4b', label: 'Stakeholder feedback noted', description: 'Responses, objections, and concerns from all attendees documented', required: true  },
+    { key: '4c', label: 'Technical questions resolved', description: 'All open integration or technical questions have clear answers', required: true  },
+    { key: '4d', label: 'Deal value entered',         description: 'Pricing parameters are clear — deal value set in the system', required: true  },
+    { key: '4e', label: 'Proposal green-light given', description: 'Prospect explicitly confirmed they want to receive a formal proposal', required: true  },
+  ],
+  5: [
+    { key: '5a', label: 'Proposal drafted',           description: 'Formal proposal with scope, pricing, and terms created in Proposal Tracker', required: true  },
+    { key: '5b', label: 'Proposal submitted',         description: 'Proposal sent to the Economic Buyer / decision-maker', required: true  },
+    { key: '5c', label: 'Negotiation completed',      description: 'All objections addressed; final scope, pricing, and terms agreed', required: true  },
+    { key: '5d', label: 'Written acceptance received', description: 'Prospect confirmed the proposal is acceptable in writing', required: true  },
+    { key: '5e', label: 'Legal/Finance notified',     description: 'Internal teams alerted to begin contract drafting', required: true  },
+  ],
+  6: [
+    { key: '6a', label: 'Contract issued',            description: 'Contract sent to prospect within 3 working days of written acceptance', required: true  },
+    { key: '6b', label: 'Legal review done',          description: 'Internal legal review of contract terms completed', required: false },
+    { key: '6c', label: 'Contract signed',            description: 'Signed agreement received from the prospect', required: true  },
+    { key: '6d', label: 'Handover brief prepared',    description: 'Briefing document for the Account Manager compiled and ready to share', required: true  },
+  ],
+  7: [
+    { key: '7a', label: 'Handover completed',         description: 'Formal handover meeting held with Account Manager within 5 days', required: true  },
+    { key: '7b', label: 'Onboarding initiated',       description: 'Client onboarding process started — first session booked', required: true  },
+    { key: '7c', label: '90-day milestones defined',  description: 'First 90-day success milestones agreed and shared with the client', required: true  },
+    { key: '7d', label: '30-day check-in done',       description: 'First monthly review completed with the client', required: false },
+  ],
+}
+
 // Stage metadata from the Krongage BD Framework
 export const STAGE_META: Record<number, {
   name: string

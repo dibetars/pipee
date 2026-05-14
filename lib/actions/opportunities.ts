@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { STAGE_META } from '@/types'
+import { STAGE_META, SUB_STAGES } from '@/types'
 import type { DisqualificationReason } from '@/types'
 
 export async function createOpportunity(formData: FormData) {
@@ -61,11 +61,43 @@ export async function advanceStage(opportunityId: string, newStage: number) {
     .eq('id', opportunityId)
     .single()
 
-  // MEDDIC gate: advancing from stage 2 requires score ≥ 4 with Pain + Economic Buyer
-  if (opp?.stage === 2 && newStage === 3) {
-    const meddic = Array.isArray(opp.meddic_scores) ? opp.meddic_scores[0] : opp.meddic_scores
-    if (!meddic || meddic.score < 4 || !meddic.identified_pain || !meddic.economic_buyer_name) {
-      return { error: 'MEDDIC score must be ≥4 with Identified Pain and Economic Buyer confirmed before advancing.' }
+  if (!opp) return { error: 'Opportunity not found.' }
+  const currentStage = opp.stage
+
+  // Only enforce gates when moving forward
+  if (newStage > currentStage) {
+    // ── Sub-stage gate: all required sub-stages must be complete ──────────────
+    const requiredKeys = (SUB_STAGES[currentStage] ?? [])
+      .filter(s => s.required)
+      .map(s => s.key)
+
+    if (requiredKeys.length > 0) {
+      const { data: completed } = await supabase
+        .from('sub_stage_progress')
+        .select('sub_stage_key')
+        .eq('opportunity_id', opportunityId)
+        .in('sub_stage_key', requiredKeys)
+
+      const completedKeys = new Set((completed ?? []).map(r => r.sub_stage_key))
+      const missing = requiredKeys.filter(k => !completedKeys.has(k))
+
+      if (missing.length > 0) {
+        const missingLabels = missing
+          .map(k => SUB_STAGES[currentStage]?.find(s => s.key === k)?.label ?? k)
+          .join(', ')
+        return {
+          error: `Complete all required checklist items before advancing. Still open: ${missingLabels}.`,
+          missingSubStages: missing,
+        }
+      }
+    }
+
+    // ── MEDDIC gate: Stage 2 → 3 needs score ≥4 with Pain + Economic Buyer ──
+    if (currentStage === 2 && newStage === 3) {
+      const meddic = Array.isArray(opp.meddic_scores) ? opp.meddic_scores[0] : opp.meddic_scores
+      if (!meddic || meddic.score < 4 || !meddic.identified_pain || !meddic.economic_buyer_name) {
+        return { error: 'MEDDIC score must be ≥4 with Identified Pain and Economic Buyer confirmed before advancing.' }
+      }
     }
   }
 
@@ -87,6 +119,33 @@ export async function advanceStage(opportunityId: string, newStage: number) {
   revalidatePath('/pipeline')
   revalidatePath(`/opportunities/${opportunityId}`)
   revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function toggleSubStage(
+  opportunityId: string,
+  subStageKey: string,
+  completed: boolean
+) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  if (completed) {
+    const { error } = await supabase
+      .from('sub_stage_progress')
+      .upsert({ opportunity_id: opportunityId, sub_stage_key: subStageKey, completed_by: user.id })
+    if (error) return { error: error.message }
+  } else {
+    const { error } = await supabase
+      .from('sub_stage_progress')
+      .delete()
+      .eq('opportunity_id', opportunityId)
+      .eq('sub_stage_key', subStageKey)
+    if (error) return { error: error.message }
+  }
+
+  revalidatePath(`/opportunities/${opportunityId}`)
   return { success: true }
 }
 
