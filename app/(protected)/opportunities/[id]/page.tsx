@@ -12,6 +12,7 @@ import { DiscoveryBriefForm } from '@/components/opportunities/DiscoveryBriefFor
 import { ProposalTracker } from '@/components/opportunities/ProposalTracker'
 import { StageNotifications } from '@/components/opportunities/StageNotifications'
 import { EditDealButton } from '@/components/opportunities/EditDealButton'
+import { ContactsSection } from '@/components/opportunities/ContactsSection'
 import { formatCurrency, formatDate, isStalled, daysSinceStageEntry } from '@/lib/utils'
 import { STAGE_META } from '@/types'
 import { AlertTriangle, Globe, Building2, Calendar, DollarSign } from 'lucide-react'
@@ -163,8 +164,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
               </div>
 
               <div className={cardCls}>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Contacts ({contacts?.length ?? 0})</p>
-                <ContactsSection opportunityId={id} contacts={contacts ?? []} />
+                <ContactsSection opportunityId={id} initialContacts={contacts ?? []} />
               </div>
             </div>
 
@@ -194,31 +194,3 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
   )
 }
 
-function ContactsSection({ opportunityId, contacts }: { opportunityId: string; contacts: import('@/types').Contact[] }) {
-  const ROLE_COLORS = {
-    champion: 'text-indigo-600',
-    economic_buyer: 'text-green-600',
-    stakeholder: 'text-amber-600',
-    other: 'text-gray-500',
-  }
-
-  return (
-    <div className="space-y-2">
-      {contacts.map(c => (
-        <div key={c.id} className="flex items-start gap-2 p-2 rounded-lg bg-slate-50 border border-slate-100">
-          <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs text-gray-600 font-medium shrink-0 mt-0.5">
-            {c.name[0]}
-          </div>
-          <div>
-            <p className="text-gray-800 text-sm font-medium">{c.name}</p>
-            {c.title && <p className="text-gray-400 text-xs">{c.title}</p>}
-            <p className={`text-xs font-medium ${ROLE_COLORS[c.role]}`}>{c.role.replace('_', ' ')}</p>
-          </div>
-        </div>
-      ))}
-      {contacts.length === 0 && (
-        <p className="text-gray-300 text-sm text-center py-3">No contacts added</p>
-      )}
-    </div>
-  )
-}

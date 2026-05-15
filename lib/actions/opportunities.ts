@@ -212,6 +212,40 @@ export async function markWonLost(id: string, outcome: 'won' | 'lost', notes?: s
   return { success: true }
 }
 
+export async function addContact(opportunityId: string, formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const name = (formData.get('name') as string)?.trim()
+  if (!name) return { error: 'Name is required' }
+
+  const { error } = await supabase.from('contacts').insert({
+    opportunity_id: opportunityId,
+    name,
+    title:        (formData.get('title') as string)?.trim()        || null,
+    role:         (formData.get('role')  as string)                || 'stakeholder',
+    email:        (formData.get('email') as string)?.trim()        || null,
+    phone:        (formData.get('phone') as string)?.trim()        || null,
+    linkedin_url: (formData.get('linkedin_url') as string)?.trim() || null,
+  })
+
+  if (error) return { error: error.message }
+  revalidatePath(`/opportunities/${opportunityId}`)
+  return { success: true }
+}
+
+export async function deleteContact(opportunityId: string, contactId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase.from('contacts').delete().eq('id', contactId)
+  if (error) return { error: error.message }
+  revalidatePath(`/opportunities/${opportunityId}`)
+  return { success: true }
+}
+
 export async function saveMEDDIC(opportunityId: string, data: Record<string, string>) {
   const supabase = await createClient()
 
