@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { FileSearch, CheckCircle, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { formatDate } from '@/lib/utils'
@@ -23,6 +24,7 @@ export function DiscoveryBriefForm({ opportunityId, brief, canReview, reviewerNa
   })
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   function handleSave() {
     setError(null)
@@ -34,7 +36,7 @@ export function DiscoveryBriefForm({ opportunityId, brief, canReview, reviewerNa
         filed_at: new Date().toISOString(),
       })
       if (e) setError(e.message)
-      else { setEditing(false) }
+      else { setEditing(false); router.refresh() }
     })
   }
 
@@ -42,9 +44,10 @@ export function DiscoveryBriefForm({ opportunityId, brief, canReview, reviewerNa
     startTransition(async () => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      await supabase.from('discovery_briefs')
+      const { error: e } = await supabase.from('discovery_briefs')
         .update({ reviewed_by: user?.id })
         .eq('opportunity_id', opportunityId)
+      if (!e) router.refresh()
     })
   }
 

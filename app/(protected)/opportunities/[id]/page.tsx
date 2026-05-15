@@ -13,6 +13,7 @@ import { ProposalTracker } from '@/components/opportunities/ProposalTracker'
 import { StageNotifications } from '@/components/opportunities/StageNotifications'
 import { EditDealButton } from '@/components/opportunities/EditDealButton'
 import { ContactsSection } from '@/components/opportunities/ContactsSection'
+import { DealOutcomeBar } from '@/components/opportunities/DealOutcomeBar'
 import { formatCurrency, formatDate, isStalled, daysSinceStageEntry } from '@/lib/utils'
 import { STAGE_META } from '@/types'
 import { AlertTriangle, Globe, Building2, Calendar, DollarSign } from 'lucide-react'
@@ -81,7 +82,8 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-3 shrink-0 flex-wrap justify-end">
+                <DealOutcomeBar opportunityId={id} currentStatus={opp.status} />
                 <EditDealButton
                   opportunity={opp}
                   profiles={profiles ?? []}
@@ -184,7 +186,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
               </div>
 
               <div className={cardCls}>
-                <ProposalTracker opportunityId={id} proposals={proposals ?? []} />
+                <ProposalTracker opportunityId={id} proposals={proposals ?? []} dealCurrency={opp.currency} />
               </div>
             </div>
           </div>

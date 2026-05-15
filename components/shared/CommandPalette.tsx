@@ -67,13 +67,16 @@ export function CommandPalette() {
     setLoading(true)
     const t = setTimeout(async () => {
       const supabase = createClient()
-      const { data } = await supabase
+      // Escape % and _ so user input doesn't break ilike
+      const safe = query.replace(/[%_\\]/g, c => `\\${c}`)
+      const { data, error } = await supabase
         .from('opportunities')
-        .select('id, title, company_name, stage, value, currency, status, profiles(name)')
-        .or(`title.ilike.%${query}%,company_name.ilike.%${query}%`)
-        .not('status', 'in', '("disqualified")')
+        .select('id, title, company_name, sector, stage, value, currency, status, profiles(name)')
+        .or(`title.ilike.%${safe}%,company_name.ilike.%${safe}%,sector.ilike.%${safe}%`)
+        .not('status', 'in', '(disqualified)')
         .limit(8)
-      setResults((data ?? []) as unknown as Opportunity[])
+      if (!error) setResults((data ?? []) as unknown as Opportunity[])
+      else setResults([])
       setLoading(false)
       setActiveIndex(0)
     }, 180)

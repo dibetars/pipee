@@ -102,7 +102,7 @@ export function SubStageChecklist({ opportunityId, stage, completedProgress }: S
             >
               {/* Checkbox */}
               <div className={cn(
-                'w-4.5 h-4.5 shrink-0 mt-0.5 rounded flex items-center justify-center border transition-colors',
+                'w-[18px] h-[18px] shrink-0 mt-0.5 rounded flex items-center justify-center border transition-colors',
                 done ? 'bg-green-500 border-green-500' : 'border-slate-300 bg-white'
               )}>
                 {loading

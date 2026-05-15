@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, FileText, Loader2 } from 'lucide-react'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { CURRENCIES } from '@/types'
 import type { Proposal, ProposalStatus } from '@/types'
 
 const STATUS_STYLES: Record<ProposalStatus, string> = {
@@ -16,30 +18,34 @@ const STATUS_STYLES: Record<ProposalStatus, string> = {
 interface ProposalTrackerProps {
   opportunityId: string
   proposals: Proposal[]
+  dealCurrency?: string
 }
 
-export function ProposalTracker({ opportunityId, proposals }: ProposalTrackerProps) {
+export function ProposalTracker({ opportunityId, proposals, dealCurrency = 'GHS' }: ProposalTrackerProps) {
   const [showForm, setShowForm] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
+    const form = e.currentTarget
     setError(null)
     startTransition(async () => {
       const supabase = createClient()
-      const { error: e } = await supabase.from('proposals').insert({
+      const { error: err } = await supabase.from('proposals').insert({
         opportunity_id: opportunityId,
         version: proposals.length + 1,
         status: fd.get('status') as string,
         scope: fd.get('scope') as string || null,
         value: fd.get('value') ? Number(fd.get('value')) : null,
+        currency: fd.get('currency') as string || dealCurrency,
         payment_schedule: fd.get('payment_schedule') as string || null,
         notes: fd.get('notes') as string || null,
       })
-      if (e) setError(e.message)
-      else setShowForm(false)
+      if (err) setError(err.message)
+      else { setShowForm(false); form.reset(); router.refresh() }
     })
   }
 
@@ -69,8 +75,16 @@ export function ProposalTracker({ opportunityId, proposals }: ProposalTrackerPro
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Value (GHS)</label>
+              <label className="block text-xs text-gray-500 mb-1">Value</label>
               <input name="value" type="number" placeholder="e.g. 75000" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Currency</label>
+              <select name="currency" defaultValue={dealCurrency} className={inputCls}>
+                {CURRENCIES.map(c => (
+                  <option key={c.code} value={c.code}>{c.symbol} {c.name}</option>
+                ))}
+              </select>
             </div>
             <div className="col-span-2">
               <label className="block text-xs text-gray-500 mb-1">Scope</label>
@@ -110,7 +124,7 @@ export function ProposalTracker({ opportunityId, proposals }: ProposalTrackerPro
                 {p.status}
               </span>
             </div>
-            {p.value && <p className="text-green-600 text-sm font-semibold">{formatCurrency(p.value)}</p>}
+            {p.value && <p className="text-green-600 text-sm font-semibold">{formatCurrency(p.value, p.currency || dealCurrency)}</p>}
             {p.scope && <p className="text-gray-500 text-xs mt-1">{p.scope}</p>}
             {p.payment_schedule && <p className="text-gray-400 text-xs mt-1">💳 {p.payment_schedule}</p>}
             <p className="text-gray-300 text-xs mt-2">{formatDate(p.created_at)}</p>

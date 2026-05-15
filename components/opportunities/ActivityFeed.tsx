@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Phone, Mail, Users, FileText, ArrowRight, Radio, Plus, Loader2 } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
 import { addActivity } from '@/lib/actions/opportunities'
@@ -33,15 +34,22 @@ export function ActivityFeed({ opportunityId, activities }: ActivityFeedProps) {
   const [showForm, setShowForm] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     setError(null)
+    const form = e.currentTarget
     startTransition(async () => {
       const result = await addActivity(opportunityId, fd)
-      if (result.error) setError(result.error)
-      else { setShowForm(false); (e.target as HTMLFormElement).reset() }
+      if (result.error) {
+        setError(result.error)
+      } else {
+        setShowForm(false)
+        form.reset()
+        router.refresh()
+      }
     })
   }
 
