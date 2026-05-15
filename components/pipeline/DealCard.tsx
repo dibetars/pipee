@@ -51,12 +51,17 @@ export function DealCard({ opportunity }: { opportunity: Opportunity }) {
       </Link>
 
       <div className="mt-3 space-y-1.5">
-        {opportunity.value && (
+        {opportunity.value ? (
           <div className="flex items-center gap-1.5 text-xs text-gray-500">
             <TrendingUp size={11} className="text-green-500" />
             {formatCurrency(opportunity.value, opportunity.currency)}
           </div>
-        )}
+        ) : opportunity.estimated_value ? (
+          <div className="flex items-center gap-1.5 text-xs text-amber-600">
+            <TrendingUp size={11} className="text-amber-400" />
+            ~{formatCurrency(opportunity.estimated_value, opportunity.currency)}
+          </div>
+        ) : null}
         {opportunity.next_action_date && (
           <div className="flex items-center gap-1.5 text-xs text-gray-500">
             <Calendar size={11} className="text-amber-500" />

@@ -20,6 +20,7 @@ export async function createOpportunity(formData: FormData) {
       sector: formData.get('sector') as string || null,
       website: formData.get('website') as string || null,
       value: formData.get('value') ? Number(formData.get('value')) : null,
+      estimated_value: formData.get('estimated_value') ? Number(formData.get('estimated_value')) : null,
       currency: formData.get('currency') as string || 'GHS',
       assigned_to: assignedTo,
       next_action: formData.get('next_action') as string || null,
@@ -32,6 +33,19 @@ export async function createOpportunity(formData: FormData) {
 
   // Create blank MEDDIC score
   await supabase.from('meddic_scores').insert({ opportunity_id: data.id, score: 0 })
+
+  // Create primary contact if provided
+  const contactName = formData.get('contact_name') as string
+  if (contactName?.trim()) {
+    await supabase.from('contacts').insert({
+      opportunity_id: data.id,
+      name: contactName.trim(),
+      title: formData.get('contact_title') as string || null,
+      role: formData.get('contact_role') as string || 'stakeholder',
+      email: formData.get('contact_email') as string || null,
+      phone: formData.get('contact_phone') as string || null,
+    })
+  }
 
   // Log creation activity
   await supabase.from('activities').insert({

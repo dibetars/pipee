@@ -38,6 +38,7 @@ export interface Opportunity {
   status: OpportunityStatus
   assigned_to: string | null
   value: number | null
+  estimated_value: number | null
   currency: string
   disqualification_reason: DisqualificationReason | null
   next_action: string | null

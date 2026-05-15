@@ -29,16 +29,17 @@ export function EditDealModal({ opportunity, profiles, sectors, currentUserRole,
     const fd = new FormData(e.currentTarget)
 
     const updates: Record<string, unknown> = {
-      title:            fd.get('title'),
-      company_name:     fd.get('company_name'),
-      sector:           fd.get('sector') || null,
-      website:          fd.get('website') || null,
-      value:            fd.get('value') ? Number(fd.get('value')) : null,
-      currency:         fd.get('currency'),
-      next_action:      fd.get('next_action') || null,
-      next_action_date: fd.get('next_action_date') || null,
+      title:             fd.get('title'),
+      company_name:      fd.get('company_name'),
+      sector:            fd.get('sector') || null,
+      website:           fd.get('website') || null,
+      value:             fd.get('value') ? Number(fd.get('value')) : null,
+      estimated_value:   fd.get('estimated_value') ? Number(fd.get('estimated_value')) : null,
+      currency:          fd.get('currency'),
+      next_action:       fd.get('next_action') || null,
+      next_action_date:  fd.get('next_action_date') || null,
       calendar_event_type: fd.get('calendar_event_type') || 'action',
-      notes:            fd.get('notes') || null,
+      notes:             fd.get('notes') || null,
     }
     if (currentUserRole === 'admin') {
       updates.assigned_to = fd.get('assigned_to') || null
@@ -111,12 +112,6 @@ export function EditDealModal({ opportunity, profiles, sectors, currentUserRole,
               </div>
             )}
 
-            {/* Value */}
-            <div>
-              <label className={lbl}>Deal Value</label>
-              <input name="value" type="number" min="0" defaultValue={opportunity.value ?? ''} placeholder="0" className={inp} />
-            </div>
-
             {/* Currency */}
             <div>
               <label className={lbl}>Currency</label>
@@ -125,6 +120,18 @@ export function EditDealModal({ opportunity, profiles, sectors, currentUserRole,
                   <option key={c.code} value={c.code}>{c.symbol} {c.name} ({c.code})</option>
                 ))}
               </select>
+            </div>
+
+            {/* Estimated Value */}
+            <div>
+              <label className={lbl}>Estimated Value <span className="text-amber-500 font-normal">(if uncertain)</span></label>
+              <input name="estimated_value" type="number" min="0" defaultValue={opportunity.estimated_value ?? ''} placeholder="Rough estimate" className={inp} />
+            </div>
+
+            {/* Confirmed Value */}
+            <div>
+              <label className={lbl}>Confirmed Value <span className="text-green-600 font-normal">(when finalised)</span></label>
+              <input name="value" type="number" min="0" defaultValue={opportunity.value ?? ''} placeholder="Agreed amount" className={inp} />
             </div>
 
             {/* Next Action */}

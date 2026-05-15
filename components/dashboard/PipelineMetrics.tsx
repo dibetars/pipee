@@ -12,8 +12,9 @@ export function PipelineMetrics({ opportunities }: PipelineMetricsProps) {
   const won = opportunities.filter(o => o.status === 'won')
   const lost = opportunities.filter(o => o.status === 'lost')
 
-  const totalPipelineValue = active.reduce((sum, o) => sum + (o.value ?? 0), 0)
-  const totalWonValue = won.reduce((sum, o) => sum + (o.value ?? 0), 0)
+  const totalPipelineValue = active.reduce((sum, o) => sum + (o.value ?? o.estimated_value ?? 0), 0)
+  const hasEstimatesInPipeline = active.some(o => !o.value && o.estimated_value)
+  const totalWonValue = won.reduce((sum, o) => sum + (o.value ?? o.estimated_value ?? 0), 0)
 
   const winRate = won.length + lost.length > 0
     ? Math.round((won.length / (won.length + lost.length)) * 100)
@@ -22,8 +23,8 @@ export function PipelineMetrics({ opportunities }: PipelineMetricsProps) {
   const cards = [
     {
       label: 'Active Pipeline',
-      value: formatCurrency(totalPipelineValue),
-      sub: `${active.length} active deals`,
+      value: `${hasEstimatesInPipeline ? '~' : ''}${formatCurrency(totalPipelineValue)}`,
+      sub: `${active.length} active deals${hasEstimatesInPipeline ? ' · incl. estimates' : ''}`,
       icon: TrendingUp,
       color: 'text-indigo-600',
       bg: 'bg-indigo-50',

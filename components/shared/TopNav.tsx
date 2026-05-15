@@ -93,16 +93,24 @@ export function TopNav({ title, profile, sectors = [], profiles = [] }: TopNavPr
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Deal Value</label>
-                  <input name="value" type="number" min="0" placeholder="e.g. 50000" className={inputCls} />
-                </div>
-                <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Currency</label>
                   <select name="currency" defaultValue="GHS" className={inputCls}>
                     {CURRENCIES.map(c => (
                       <option key={c.code} value={c.code}>{c.symbol} {c.name}</option>
                     ))}
                   </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Estimated Value <span className="text-amber-500 font-normal">(if uncertain)</span>
+                  </label>
+                  <input name="estimated_value" type="number" min="0" placeholder="Rough estimate" className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Confirmed Value <span className="text-green-600 font-normal">(optional)</span>
+                  </label>
+                  <input name="value" type="number" min="0" placeholder="Agreed amount" className={inputCls} />
                 </div>
                 {profile.role === 'admin' && profiles.length > 0 && (
                   <div className="col-span-2">
@@ -122,6 +130,38 @@ export function TopNav({ title, profile, sectors = [], profiles = [] }: TopNavPr
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Action Date</label>
                   <input name="next_action_date" type="date" className={inputCls} />
+                </div>
+              </div>
+
+              {/* Primary Contact */}
+              <div className="border-t border-slate-100 pt-4">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Primary Contact</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Full Name</label>
+                    <input name="contact_name" placeholder="e.g. Ama Owusu" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Job Title</label>
+                    <input name="contact_title" placeholder="e.g. Head of Operations" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Role</label>
+                    <select name="contact_role" className={inputCls}>
+                      <option value="stakeholder">Stakeholder</option>
+                      <option value="champion">Champion</option>
+                      <option value="economic_buyer">Economic Buyer</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                    <input name="contact_email" type="email" placeholder="ama@company.com" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
+                    <input name="contact_phone" type="tel" placeholder="+233 XX XXX XXXX" className={inputCls} />
+                  </div>
                 </div>
               </div>
               {error && <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}

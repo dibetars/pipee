@@ -90,10 +90,14 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
                   sectors={sectors ?? []}
                   currentUserRole={profile.role}
                 />
-                {opp.value && (
+                {(opp.value || opp.estimated_value) && (
                   <div className="text-right">
-                    <p className="text-green-600 text-xl font-bold">{formatCurrency(opp.value, opp.currency)}</p>
-                    <p className="text-gray-400 text-xs">Deal Value</p>
+                    {opp.value ? (
+                      <p className="text-green-600 text-xl font-bold">{formatCurrency(opp.value, opp.currency)}</p>
+                    ) : (
+                      <p className="text-amber-500 text-xl font-bold">~{formatCurrency(opp.estimated_value, opp.currency)}</p>
+                    )}
+                    <p className="text-gray-400 text-xs">{opp.value ? 'Deal Value' : 'Estimated Value'}</p>
                   </div>
                 )}
               </div>
@@ -136,7 +140,16 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
               <div className="flex items-center gap-1.5 text-gray-400 text-xs mb-1">
                 <DollarSign size={11} /> Value
               </div>
-              <p className="text-green-600 text-sm font-semibold">{formatCurrency(opp.value, opp.currency)}</p>
+              {opp.value ? (
+                <p className="text-green-600 text-sm font-semibold">{formatCurrency(opp.value, opp.currency)}</p>
+              ) : opp.estimated_value ? (
+                <>
+                  <p className="text-amber-600 text-sm font-semibold">~{formatCurrency(opp.estimated_value, opp.currency)}</p>
+                  <p className="text-gray-400 text-xs">estimated</p>
+                </>
+              ) : (
+                <p className="text-gray-400 text-sm font-medium">TBD</p>
+              )}
             </div>
             <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
               <div className="flex items-center gap-1.5 text-gray-400 text-xs mb-1">
