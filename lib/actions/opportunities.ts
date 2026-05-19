@@ -274,16 +274,64 @@ export async function saveMEDDIC(opportunityId: string, data: Record<string, str
 
   const { error } = await supabase
     .from('meddic_scores')
-    .upsert({
-      opportunity_id: opportunityId,
-      ...data,
-      score: filled,
-      updated_at: new Date().toISOString(),
-    })
+    .upsert(
+      {
+        opportunity_id: opportunityId,
+        ...data,
+        score: filled,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'opportunity_id' }
+    )
 
   if (error) return { error: error.message }
   revalidatePath(`/opportunities/${opportunityId}`)
   return { success: true, score: filled }
+}
+
+export async function updateActivity(
+  activityId: string,
+  opportunityId: string,
+  data: { type: string; title: string; description: string | null; outcome: string | null; occurred_at: string }
+) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('activities')
+    .update(data)
+    .eq('id', activityId)
+
+  if (error) return { error: error.message }
+  revalidatePath(`/opportunities/${opportunityId}`)
+  return { success: true }
+}
+
+export async function deleteActivity(activityId: string, opportunityId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase.from('activities').delete().eq('id', activityId)
+  if (error) return { error: error.message }
+  revalidatePath(`/opportunities/${opportunityId}`)
+  return { success: true }
+}
+
+export async function updateProposal(
+  proposalId: string,
+  opportunityId: string,
+  data: { status: string; scope: string | null; value: number | null; currency: string; payment_schedule: string | null; notes: string | null }
+) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase.from('proposals').update(data).eq('id', proposalId)
+  if (error) return { error: error.message }
+  revalidatePath(`/opportunities/${opportunityId}`)
+  return { success: true }
 }
 
 export async function addActivity(opportunityId: string, formData: FormData) {

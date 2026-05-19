@@ -449,13 +449,24 @@ function MiniMonthNav({
   )
 }
 
+type EventFilter = 'all' | 'meeting_physical' | 'meeting_online' | 'deadline' | 'action'
+
+const FILTER_OPTIONS: { value: EventFilter; label: string; icon: React.ElementType; chip: string }[] = [
+  { value: 'all',              label: 'All',             icon: CalIcon,       chip: 'bg-slate-100 text-slate-700 border-slate-200' },
+  { value: 'meeting_physical', label: 'Physical',        icon: MapPin,        chip: 'bg-violet-100 text-violet-700 border-violet-200' },
+  { value: 'meeting_online',   label: 'Online',          icon: Video,         chip: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { value: 'deadline',         label: 'Deadlines',       icon: Clock,         chip: 'bg-red-100 text-red-700 border-red-200' },
+  { value: 'action',           label: 'Actions',         icon: ClipboardList, chip: 'bg-amber-100 text-amber-700 border-amber-200' },
+]
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 export function CalendarView({ opportunities }: CalendarViewProps) {
   const [view, setView] = useState<View>('month')
   const [current, setCurrent] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
+  const [eventFilter, setEventFilter] = useState<EventFilter>('all')
 
-  const events: CalEvent[] = useMemo(() =>
+  const allEvents: CalEvent[] = useMemo(() =>
     opportunities
       .filter(o => o.next_action_date)
       .map(o => ({
@@ -468,6 +479,11 @@ export function CalendarView({ opportunities }: CalendarViewProps) {
         opp: o,
       })),
     [opportunities]
+  )
+
+  const events = useMemo(() =>
+    eventFilter === 'all' ? allEvents : allEvents.filter(e => e.eventType === eventFilter),
+    [allEvents, eventFilter]
   )
 
   function navigate(dir: 'prev' | 'next') {
@@ -487,28 +503,54 @@ export function CalendarView({ opportunities }: CalendarViewProps) {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* ── Toolbar ── */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 shrink-0 bg-white">
-        <MiniMonthNav
-          current={current}
-          onPrev={() => navigate('prev')}
-          onNext={() => navigate('next')}
-          onToday={() => { setCurrent(new Date()); setSelectedDay(new Date()) }}
-        />
+      <div className="flex flex-col gap-2 px-5 py-3 border-b border-slate-200 shrink-0 bg-white">
+        <div className="flex items-center justify-between">
+          <MiniMonthNav
+            current={current}
+            onPrev={() => navigate('prev')}
+            onNext={() => navigate('next')}
+            onToday={() => { setCurrent(new Date()); setSelectedDay(new Date()) }}
+          />
 
-        {/* View switcher */}
-        <div className="flex items-center bg-slate-100 rounded-lg p-1 gap-0.5">
-          {(['month', 'week', 'agenda'] as View[]).map(v => (
+          {/* View switcher */}
+          <div className="flex items-center bg-slate-100 rounded-lg p-1 gap-0.5">
+            {(['month', 'week', 'agenda'] as View[]).map(v => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={cn(
+                  'px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize',
+                  view === v
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                )}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Event type filters */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {FILTER_OPTIONS.map(({ value, label, icon: Icon, chip }) => (
             <button
-              key={v}
-              onClick={() => setView(v)}
+              key={value}
+              onClick={() => setEventFilter(value)}
               className={cn(
-                'px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize',
-                view === v
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all',
+                eventFilter === value
+                  ? chip + ' shadow-sm'
+                  : 'bg-white text-gray-400 border-slate-200 hover:border-slate-300'
               )}
             >
-              {v}
+              <Icon size={11} />
+              {label}
+              {value !== 'all' && (
+                <span className="ml-0.5 opacity-60">
+                  {allEvents.filter(e => e.eventType === value).length}
+                </span>
+              )}
             </button>
           ))}
         </div>
