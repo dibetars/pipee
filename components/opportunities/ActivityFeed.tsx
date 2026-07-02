@@ -225,13 +225,32 @@ function NextActionCard({ opportunityId, nextAction, nextActionDate, onRefresh, 
             )}
           </div>
         </div>
-        <button
-          onClick={() => setEditing(true)}
-          className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-indigo-500 transition-all p-0.5 rounded"
-          title="Edit next action"
-        >
-          <Pencil size={11} />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            disabled={isPending}
+            onClick={() => startTransition(async () => {
+              await updateNextAction(opportunityId, null, null)
+              onRefresh()
+            })}
+            title="Mark as done"
+            className={cn(
+              'flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-md transition-all disabled:opacity-50',
+              overdue
+                ? 'bg-red-100 text-red-500 hover:bg-green-100 hover:text-green-600'
+                : 'opacity-0 group-hover:opacity-100 text-gray-300 hover:text-green-600 hover:bg-green-50'
+            )}
+          >
+            {isPending ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />}
+            <span>Done</span>
+          </button>
+          <button
+            onClick={() => setEditing(true)}
+            className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-indigo-500 transition-all p-0.5 rounded"
+            title="Edit next action"
+          >
+            <Pencil size={11} />
+          </button>
+        </div>
       </div>
     </div>
   )
