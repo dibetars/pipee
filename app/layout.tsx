@@ -5,8 +5,8 @@ import './globals.css'
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
 
 export const metadata: Metadata = {
-  title: 'Krongage BD | Pipeline',
-  description: 'Krontiva Business Development Pipeline Manager',
+  title: 'Pipee | Pipeline Management',
+  description: 'Pipee — Pipeline Management Tool by Krontiva',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

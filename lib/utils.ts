@@ -38,6 +38,11 @@ export function daysSinceStageEntry(stageEnteredAt: string): number {
   return Math.floor((Date.now() - new Date(stageEnteredAt).getTime()) / (1000 * 60 * 60 * 24))
 }
 
+export function isOverdue(date: string | null): boolean {
+  if (!date) return false
+  return new Date(date) < new Date(new Date().toDateString())
+}
+
 export function initials(name: string): string {
   return name
     .split(' ')

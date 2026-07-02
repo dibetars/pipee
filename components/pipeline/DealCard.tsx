@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { AlertTriangle, Calendar, User, TrendingUp } from 'lucide-react'
-import { cn, formatCurrency, formatDate, isStalled } from '@/lib/utils'
+import { cn, formatCurrency, formatDate, isStalled, isOverdue } from '@/lib/utils'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import type { Opportunity } from '@/types'
 
@@ -62,12 +62,16 @@ export function DealCard({ opportunity }: { opportunity: Opportunity }) {
             ~{formatCurrency(opportunity.estimated_value, opportunity.currency)}
           </div>
         ) : null}
-        {opportunity.next_action_date && (
-          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <Calendar size={11} className="text-amber-500" />
-            {formatDate(opportunity.next_action_date)}
-          </div>
-        )}
+        {opportunity.next_action_date && (() => {
+          const overdue = isOverdue(opportunity.next_action_date)
+          return (
+            <div className={cn('flex items-center gap-1.5 text-xs', overdue ? 'text-red-500' : 'text-gray-500')}>
+              <Calendar size={11} className={overdue ? 'text-red-400' : 'text-amber-500'} />
+              {formatDate(opportunity.next_action_date)}
+              {overdue && <span className="font-semibold">· Overdue</span>}
+            </div>
+          )
+        })()}
         {opportunity.profiles && (
           <div className="flex items-center gap-1.5 text-xs text-gray-500">
             <User size={11} />

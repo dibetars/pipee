@@ -41,7 +41,7 @@ export default async function DashboardPage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-1">
             Good {getGreeting()}, {profile.name.split(' ')[0]} 👋
           </h2>
-          <p className="text-gray-400 text-sm">Here's your Krongage BD pipeline overview.</p>
+          <p className="text-gray-400 text-sm">Here's your Pipee pipeline overview.</p>
         </div>
 
         {/* First-time onboarding banner */}
@@ -53,7 +53,7 @@ export default async function DashboardPage() {
             <BookOpen size={18} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-900 text-sm">New to Krongage BD?</p>
+            <p className="font-semibold text-gray-900 text-sm">New to Pipee?</p>
             <p className="text-xs text-gray-500 mt-0.5">Take the interactive walkthrough — learn the 7-stage pipeline, MEDDIC scoring, and how to move deals forward.</p>
           </div>
           <ArrowRight size={16} className="text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0" />

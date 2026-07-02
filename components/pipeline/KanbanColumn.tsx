@@ -16,8 +16,17 @@ export function KanbanColumn({ stage, opportunities }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: `stage-${stage}` })
   const meta = STAGE_META[stage]
   const color = STAGE_COLORS[stage]
-  const totalValue = opportunities.reduce((sum, o) => sum + (o.value || o.estimated_value || 0), 0)
-  const hasEstimates = opportunities.some(o => !o.value && o.estimated_value)
+  // Group totals by currency — never mix currencies into one number
+  const byCurrency: Record<string, { total: number; hasEstimate: boolean }> = {}
+  for (const o of opportunities) {
+    const amount = o.value ?? o.estimated_value ?? 0
+    if (!amount) continue
+    const cur = o.currency || 'GHS'
+    if (!byCurrency[cur]) byCurrency[cur] = { total: 0, hasEstimate: false }
+    byCurrency[cur].total += amount
+    if (!o.value && o.estimated_value) byCurrency[cur].hasEstimate = true
+  }
+  const currencyTotals = Object.entries(byCurrency)
 
   return (
     <div className="flex flex-col w-72 shrink-0">
@@ -30,9 +39,13 @@ export function KanbanColumn({ stage, opportunities }: KanbanColumnProps) {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {totalValue > 0 && (
-            <span className={`text-xs ${hasEstimates ? 'text-amber-500' : 'text-gray-400'}`}>
-              {hasEstimates && '~'}{formatCurrency(totalValue)}
+          {currencyTotals.length > 0 && (
+            <span className="text-xs flex items-center gap-1 flex-wrap justify-end">
+              {currencyTotals.map(([cur, { total, hasEstimate }]) => (
+                <span key={cur} className={hasEstimate ? 'text-amber-500' : 'text-gray-400'}>
+                  {hasEstimate && '~'}{formatCurrency(total, cur)}
+                </span>
+              ))}
             </span>
           )}
           <span className="text-gray-500 text-xs bg-slate-100 rounded-full px-2 py-0.5">

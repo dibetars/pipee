@@ -29,17 +29,14 @@ export function EditDealModal({ opportunity, profiles, sectors, currentUserRole,
     const fd = new FormData(e.currentTarget)
 
     const updates: Record<string, unknown> = {
-      title:             fd.get('title'),
-      company_name:      fd.get('company_name'),
-      sector:            fd.get('sector') || null,
-      website:           fd.get('website') || null,
-      value:             fd.get('value') ? Number(fd.get('value')) : null,
-      estimated_value:   fd.get('estimated_value') ? Number(fd.get('estimated_value')) : null,
-      currency:          fd.get('currency'),
-      next_action:       fd.get('next_action') || null,
-      next_action_date:  fd.get('next_action_date') || null,
-      calendar_event_type: fd.get('calendar_event_type') || 'action',
-      notes:             fd.get('notes') || null,
+      title:           fd.get('title'),
+      company_name:    fd.get('company_name'),
+      sector:          fd.get('sector') || null,
+      website:         fd.get('website') || null,
+      value:           fd.get('value') ? Number(fd.get('value')) : null,
+      estimated_value: fd.get('estimated_value') ? Number(fd.get('estimated_value')) : null,
+      currency:        fd.get('currency'),
+      notes:           fd.get('notes') || null,
     }
     if (currentUserRole === 'admin') {
       updates.assigned_to = fd.get('assigned_to') || null
@@ -132,28 +129,6 @@ export function EditDealModal({ opportunity, profiles, sectors, currentUserRole,
             <div>
               <label className={lbl}>Confirmed Value <span className="text-green-600 font-normal">(when finalised)</span></label>
               <input name="value" type="number" min="0" defaultValue={opportunity.value ?? ''} placeholder="Agreed amount" className={inp} />
-            </div>
-
-            {/* Next Action */}
-            <div className="col-span-2">
-              <label className={lbl}>Next Action</label>
-              <input name="next_action" defaultValue={opportunity.next_action ?? ''} placeholder="e.g. Send proposal draft" className={inp} />
-            </div>
-
-            {/* Next Action Date + Event Type */}
-            <div>
-              <label className={lbl}>Action Date</label>
-              <input name="next_action_date" type="date" defaultValue={opportunity.next_action_date ?? ''} className={inp} />
-            </div>
-
-            <div>
-              <label className={lbl}>Calendar Event Type</label>
-              <select name="calendar_event_type" defaultValue={opportunity.calendar_event_type ?? 'action'} className={inp}>
-                <option value="action">📋 Follow-up / Action</option>
-                <option value="meeting_physical">📍 Physical Meeting</option>
-                <option value="meeting_online">💻 Online Meeting</option>
-                <option value="deadline">🔴 Deadline</option>
-              </select>
             </div>
 
             {/* Notes */}

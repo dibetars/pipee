@@ -21,11 +21,11 @@ import {
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { href: '/dashboard',     label: 'Dashboard',  icon: LayoutDashboard },
-  { href: '/pipeline',      label: 'Pipeline',   icon: Columns3 },
-  { href: '/opportunities', label: 'All Deals',  icon: List },
-  { href: '/calendar',      label: 'Calendar',   icon: CalendarDays },
-  { href: '/walkthrough',   label: 'Get Started', icon: BookOpen },
+  { href: '/dashboard',     label: 'Dashboard',   icon: LayoutDashboard, adminOnly: false },
+  { href: '/pipeline',      label: 'Pipeline',    icon: Columns3,        adminOnly: false },
+  { href: '/opportunities', label: 'All Deals',   icon: List,            adminOnly: true  },
+  { href: '/calendar',      label: 'Calendar',    icon: CalendarDays,    adminOnly: false },
+  { href: '/walkthrough',   label: 'Get Started', icon: BookOpen,        adminOnly: false },
 ]
 
 const STORAGE_KEY = 'krongage-sidebar-collapsed'
@@ -86,8 +86,8 @@ export function Sidebar({ profile }: SidebarProps) {
         {/* Word mark — hidden when collapsed */}
         {!isCollapsed && (
           <div className="flex-1 min-w-0">
-            <p className="text-gray-900 font-semibold text-sm leading-none">Krongage BD</p>
-            <p className="text-gray-400 text-xs mt-0.5">Pipeline</p>
+            <p className="text-gray-900 font-semibold text-sm leading-none">Pipee</p>
+            <p className="text-gray-400 text-xs mt-0.5">Pipeline Management</p>
           </div>
         )}
 
@@ -109,7 +109,7 @@ export function Sidebar({ profile }: SidebarProps) {
 
       {/* Nav */}
       <nav className={cn('flex-1 py-4 space-y-0.5 overflow-y-auto', isCollapsed ? 'px-2' : 'px-3')}>
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {NAV_ITEMS.filter(item => !item.adminOnly || profile.role === 'admin').map(({ href, label, icon: Icon }) => {
           const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
           return (
             <Link

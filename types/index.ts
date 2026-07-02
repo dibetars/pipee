@@ -204,7 +204,7 @@ export const SUB_STAGES: Record<number, SubStageItem[]> = {
   ],
 }
 
-// Stage metadata from the Krongage BD Framework
+// Stage metadata from the Pipee BD Framework
 export const STAGE_META: Record<number, {
   name: string
   purpose: string
@@ -284,6 +284,17 @@ export const STAGE_META: Record<number, {
       'First 90-day success milestones defined',
     ],
   },
+}
+
+// Default next action auto-set when a deal enters each stage
+export const STAGE_DEFAULT_NEXT_ACTION: Record<number, { action: string; days: number }> = {
+  1: { action: 'Send first outreach (email or LinkedIn)',       days: 2  },
+  2: { action: 'Schedule and run discovery/qualification call', days: 3  },
+  3: { action: 'Complete and file Discovery Brief',             days: 5  },
+  4: { action: 'Prepare and deliver solution demonstration',    days: 7  },
+  5: { action: 'Send formal proposal to prospect',              days: 5  },
+  6: { action: 'Issue contract and collect signed agreement',   days: 3  },
+  7: { action: 'Complete handover briefing with Account Manager', days: 7 },
 }
 
 export const STAGE_COLORS: Record<number, string> = {

@@ -46,7 +46,7 @@ function WelcomeSlide() {
         <span className="text-white font-bold text-4xl">K</span>
       </div>
       <div>
-        <h2 className="text-3xl font-bold text-gray-900">Welcome to Krongage BD</h2>
+        <h2 className="text-3xl font-bold text-gray-900">Welcome to Pipee</h2>
         <p className="text-gray-500 mt-2 text-lg max-w-lg mx-auto">
           Your team's command centre for tracking every deal from first contact to signed contract.
         </p>
@@ -232,22 +232,45 @@ function CreatingDealSlide() {
 }
 
 function DealDetailSlide() {
-  const [tab, setTab] = useState<'activity' | 'meddic' | 'contacts' | 'brief'>('activity')
+  const [tab, setTab] = useState<'overview' | 'activity' | 'meddic' | 'documents'>('overview')
   const tabs = [
-    { id: 'activity' as const, label: 'Activity',  icon: MessageSquare },
-    { id: 'meddic'  as const, label: 'MEDDIC',    icon: Star           },
-    { id: 'contacts'as const, label: 'Contacts',  icon: Users          },
-    { id: 'brief'   as const, label: 'Discovery', icon: FileText       },
+    { id: 'overview'   as const, label: 'Overview',   icon: Users       },
+    { id: 'activity'   as const, label: 'Activity',   icon: MessageSquare },
+    { id: 'meddic'     as const, label: 'MEDDIC',     icon: Star        },
+    { id: 'documents'  as const, label: 'Documents',  icon: FileText    },
   ]
   const content: Record<typeof tab, React.ReactNode> = {
+    overview: (
+      <div className="space-y-3">
+        <p className="text-sm text-gray-600">The Overview tab shows all contacts on the deal — Champion, Economic Buyer, and Stakeholders. Add everyone involved so nothing falls through the cracks.</p>
+        {['Champion', 'Economic Buyer', 'Stakeholder'].map((role, i) => (
+          <div key={role} className="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
+            <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-semibold text-indigo-700">
+              {['C', 'E', 'S'][i]}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-700">{role}</p>
+              <p className="text-[10px] text-gray-400">{['Your internal advocate', 'Signs the budget', 'Influences the decision'][i]}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
     activity: (
       <div className="space-y-3">
-        <p className="text-sm text-gray-600">Log every interaction — calls, emails, meetings, notes. The activity feed keeps the full history of every deal.</p>
+        <p className="text-sm text-gray-600">Log every interaction and track your next action — all in one place.</p>
+        <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 flex items-start gap-2.5">
+          <CalendarDays size={14} className="text-indigo-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-semibold text-indigo-700">Next Action card</p>
+            <p className="text-xs text-indigo-600/80 mt-0.5">Pinned at the top of the feed. Click "Next action" to set or update it. Turns red when overdue.</p>
+          </div>
+        </div>
         {[
-          { icon: Phone, label: 'Call', color: 'text-blue-500 bg-blue-50'   },
-          { icon: Mail,  label: 'Email',color: 'text-violet-500 bg-violet-50'},
-          { icon: Users, label: 'Meeting', color: 'text-amber-500 bg-amber-50'},
-          { icon: FileText, label: 'Note', color: 'text-gray-500 bg-slate-100'},
+          { icon: Phone,    label: 'Call',    color: 'text-blue-500 bg-blue-50'    },
+          { icon: Mail,     label: 'Email',   color: 'text-violet-500 bg-violet-50' },
+          { icon: Users,    label: 'Meeting', color: 'text-amber-500 bg-amber-50'  },
+          { icon: FileText, label: 'Note',    color: 'text-gray-500 bg-slate-100'  },
         ].map(({ icon: Icon, label, color }) => (
           <div key={label} className="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
             <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center text-xs', color)}>
@@ -271,29 +294,17 @@ function DealDetailSlide() {
         </div>
       </div>
     ),
-    contacts: (
+    documents: (
       <div className="space-y-3">
-        <p className="text-sm text-gray-600">Add every stakeholder from the account. Tag them as Champion, Economic Buyer, or Stakeholder so you know who to involve at each stage.</p>
-        {['Champion', 'Economic Buyer', 'Stakeholder'].map((role, i) => (
-          <div key={role} className="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
-            <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-semibold text-indigo-700">
-              {['C', 'E', 'S'][i]}
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-700">{role}</p>
-              <p className="text-[10px] text-gray-400">{['Your internal advocate', 'Signs the budget', 'Influences the decision'][i]}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    ),
-    brief: (
-      <div className="space-y-3">
-        <p className="text-sm text-gray-600">File a Discovery Brief after Stage 3 meetings. It captures pain points, success criteria, and constraints — and is reviewed by the Solutions Lead before proposals go out.</p>
-        {['Context & Background', 'Pain Points', 'Success Criteria', 'Constraints & Risks'].map(section => (
-          <div key={section} className="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
+        <p className="text-sm text-gray-600">Documents unlock at Stage 3. Contains the Discovery Brief and Proposal Tracker.</p>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2.5">
+          <Bell size={14} className="text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-700">The tab shows a padlock icon at stages 1–2. Advance to Stage 3 (Discovery) to unlock it.</p>
+        </div>
+        {['Discovery Brief — context, pain points, success criteria', 'Proposal Tracker — version history, status, deal value'].map(item => (
+          <div key={item} className="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
             <CheckCircle2 size={14} className="text-slate-300 shrink-0" />
-            <span className="text-sm text-gray-600">{section}</span>
+            <span className="text-xs text-gray-600">{item}</span>
           </div>
         ))}
       </div>
@@ -302,7 +313,7 @@ function DealDetailSlide() {
   return (
     <div className="space-y-4">
       <p className="text-gray-600 text-sm leading-relaxed">
-        Click any deal to open its detail page. You'll find four key sections:
+        Click any deal to open its detail page. The sticky header shows your stage progress — tap it to open the stage checklist. Below that, four tabs:
       </p>
       <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
         {tabs.map(({ id, label, icon: Icon }) => (

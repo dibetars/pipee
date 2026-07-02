@@ -27,8 +27,8 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-600 mb-4">
             <span className="text-white font-bold text-lg">K</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Krongage BD</h1>
-          <p className="text-gray-400 text-sm mt-1">Pipeline Management</p>
+          <h1 className="text-2xl font-bold text-gray-900">Pipee</h1>
+          <p className="text-gray-400 text-sm mt-1">Pipeline Management Tool</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-xl p-8 space-y-5 shadow-sm">

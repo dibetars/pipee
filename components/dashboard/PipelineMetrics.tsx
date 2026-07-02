@@ -12,9 +12,23 @@ export function PipelineMetrics({ opportunities }: PipelineMetricsProps) {
   const won = opportunities.filter(o => o.status === 'won')
   const lost = opportunities.filter(o => o.status === 'lost')
 
-  const totalPipelineValue = active.reduce((sum, o) => sum + (o.value ?? o.estimated_value ?? 0), 0)
-  const hasEstimatesInPipeline = active.some(o => !o.value && o.estimated_value)
-  const totalWonValue = won.reduce((sum, o) => sum + (o.value ?? o.estimated_value ?? 0), 0)
+  // Group by currency to avoid mixing GHS + USD totals
+  function groupByCurrency(opps: Opportunity[]) {
+    const map: Record<string, { total: number; hasEstimate: boolean }> = {}
+    for (const o of opps) {
+      const amount = o.value ?? o.estimated_value ?? 0
+      if (!amount) continue
+      const cur = o.currency || 'GHS'
+      if (!map[cur]) map[cur] = { total: 0, hasEstimate: false }
+      map[cur].total += amount
+      if (!o.value && o.estimated_value) map[cur].hasEstimate = true
+    }
+    return Object.entries(map)
+  }
+
+  const activeByCurrency = groupByCurrency(active)
+  const wonByCurrency    = groupByCurrency(won)
+  const hasEstimatesInPipeline = activeByCurrency.some(([, v]) => v.hasEstimate)
 
   const winRate = won.length + lost.length > 0
     ? Math.round((won.length / (won.length + lost.length)) * 100)
@@ -23,23 +37,24 @@ export function PipelineMetrics({ opportunities }: PipelineMetricsProps) {
   const cards = [
     {
       label: 'Active Pipeline',
-      value: `${hasEstimatesInPipeline ? '~' : ''}${formatCurrency(totalPipelineValue)}`,
-      sub: `${active.length} active deals${hasEstimatesInPipeline ? ' · incl. estimates' : ''}`,
+      currencies: activeByCurrency,
+      sub: `${active.length} active deal${active.length !== 1 ? 's' : ''}${hasEstimatesInPipeline ? ' · incl. estimates' : ''}`,
       icon: TrendingUp,
       color: 'text-indigo-600',
       bg: 'bg-indigo-50',
     },
     {
       label: 'Won This Period',
-      value: formatCurrency(totalWonValue),
-      sub: `${won.length} deals closed`,
+      currencies: wonByCurrency,
+      sub: `${won.length} deal${won.length !== 1 ? 's' : ''} closed`,
       icon: Trophy,
       color: 'text-green-600',
       bg: 'bg-green-50',
     },
     {
       label: 'Win Rate',
-      value: `${winRate}%`,
+      currencies: null,
+      plainValue: `${winRate}%`,
       sub: `${won.length}W / ${lost.length}L`,
       icon: Target,
       color: 'text-amber-600',
@@ -47,7 +62,8 @@ export function PipelineMetrics({ opportunities }: PipelineMetricsProps) {
     },
     {
       label: 'Stalled Deals',
-      value: String(stalled.length),
+      currencies: null,
+      plainValue: String(stalled.length),
       sub: 'Need attention',
       icon: AlertTriangle,
       color: 'text-red-600',
@@ -57,7 +73,7 @@ export function PipelineMetrics({ opportunities }: PipelineMetricsProps) {
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map(({ label, value, sub, icon: Icon, color, bg }) => (
+      {cards.map(({ label, currencies, plainValue, sub, icon: Icon, color, bg }) => (
         <div key={label} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <p className="text-gray-500 text-xs font-medium">{label}</p>
@@ -65,7 +81,20 @@ export function PipelineMetrics({ opportunities }: PipelineMetricsProps) {
               <Icon size={14} className={color} />
             </div>
           </div>
-          <p className="text-gray-900 text-2xl font-bold">{value}</p>
+          {currencies && currencies.length > 0 ? (
+            <div className="space-y-0.5">
+              {currencies.map(([cur, { total, hasEstimate }]) => (
+                <p key={cur} className="text-gray-900 text-xl font-bold leading-tight">
+                  {hasEstimate && <span className="text-amber-500">~</span>}
+                  {formatCurrency(total, cur)}
+                </p>
+              ))}
+            </div>
+          ) : currencies && currencies.length === 0 ? (
+            <p className="text-gray-900 text-2xl font-bold">—</p>
+          ) : (
+            <p className="text-gray-900 text-2xl font-bold">{plainValue}</p>
+          )}
           <p className="text-gray-400 text-xs mt-1">{sub}</p>
         </div>
       ))}

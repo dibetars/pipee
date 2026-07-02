@@ -120,9 +120,9 @@ export async function generatePptx(filters: ReportFilters): Promise<{ base64?: s
   // ── Build PPTX ─────────────────────────────────────────────────────────────
   const pptx = new PptxGenJS()
   pptx.layout = 'LAYOUT_WIDE' // 13.33 × 7.5 inches
-  pptx.author  = 'Krongage BD'
+  pptx.author  = 'Pipee'
   pptx.company = 'Krontiva'
-  pptx.title   = `Krongage BD — ${reportTitle}`
+  pptx.title   = `Pipee — ${reportTitle}`
 
   // ── SLIDE 1: Cover ─────────────────────────────────────────────────────────
   {
@@ -356,7 +356,7 @@ export async function generatePptx(filters: ReportFilters): Promise<{ base64?: s
 
     // Footer
     s.addShape('rect', { x: 0, y: 7.15, w: '100%', h: 0.35, fill: { color: C.indigo } })
-    s.addText(`Krongage BD — ${reportTitle} — ${today} — Krontiva Confidential`, { x: 0.3, y: 7.15, w: 12.5, h: 0.35, fontSize: 8, color: 'C7D2FE', valign: 'middle' })
+    s.addText(`Pipee — ${reportTitle} — ${today} — Krontiva Confidential`, { x: 0.3, y: 7.15, w: 12.5, h: 0.35, fontSize: 8, color: 'C7D2FE', valign: 'middle' })
   }
 
   // ── Export ──────────────────────────────────────────────────────────────────

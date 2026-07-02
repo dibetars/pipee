@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { STAGE_META, SUB_STAGES } from '@/types'
+import { STAGE_META, SUB_STAGES, STAGE_DEFAULT_NEXT_ACTION } from '@/types'
 import type { DisqualificationReason } from '@/types'
 
 export async function createOpportunity(formData: FormData) {
@@ -23,8 +23,11 @@ export async function createOpportunity(formData: FormData) {
       estimated_value: formData.get('estimated_value') ? Number(formData.get('estimated_value')) : null,
       currency: formData.get('currency') as string || 'GHS',
       assigned_to: assignedTo,
-      next_action: formData.get('next_action') as string || null,
-      next_action_date: formData.get('next_action_date') as string || null,
+      // Stage 1 default next action — user can override via the form
+      next_action: formData.get('next_action') as string || STAGE_DEFAULT_NEXT_ACTION[1].action,
+      next_action_date: formData.get('next_action_date') as string || (() => {
+        const d = new Date(); d.setDate(d.getDate() + STAGE_DEFAULT_NEXT_ACTION[1].days); return d.toISOString().slice(0, 10)
+      })(),
     })
     .select()
     .single()
@@ -115,9 +118,20 @@ export async function advanceStage(opportunityId: string, newStage: number) {
     }
   }
 
+  // Build the auto next action for the new stage
+  const defaultNext = STAGE_DEFAULT_NEXT_ACTION[newStage]
+  const nextActionDate = new Date()
+  nextActionDate.setDate(nextActionDate.getDate() + (defaultNext?.days ?? 3))
+
   const { error } = await supabase
     .from('opportunities')
-    .update({ stage: newStage, stage_entered_at: new Date().toISOString(), status: 'active' })
+    .update({
+      stage: newStage,
+      stage_entered_at: new Date().toISOString(),
+      status: 'active',
+      next_action: defaultNext?.action ?? null,
+      next_action_date: nextActionDate.toISOString().slice(0, 10),
+    })
     .eq('id', opportunityId)
 
   if (error) return { error: error.message }
@@ -334,6 +348,53 @@ export async function updateProposal(
   return { success: true }
 }
 
+export async function updateNextAction(
+  opportunityId: string,
+  nextAction: string | null,
+  nextActionDate: string | null
+) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  // Fetch the current next action before overwriting so we can log it
+  const { data: current } = await supabase
+    .from('opportunities')
+    .select('next_action, next_action_date')
+    .eq('id', opportunityId)
+    .single()
+
+  // If there was a previous next action, log it as a completed note in the activity feed
+  if (current?.next_action) {
+    const wasOverdue = current.next_action_date
+      ? new Date(current.next_action_date) < new Date(new Date().toDateString())
+      : false
+
+    await supabase.from('activities').insert({
+      opportunity_id: opportunityId,
+      user_id: user.id,
+      type: 'note',
+      title: `Next action: ${current.next_action}`,
+      description: current.next_action_date
+        ? `Due ${new Date(current.next_action_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}${wasOverdue ? ' · was overdue' : ''}`
+        : null,
+      outcome: nextAction ? `Replaced with: ${nextAction}` : 'Cleared',
+      occurred_at: new Date().toISOString(),
+    })
+  }
+
+  const { error } = await supabase
+    .from('opportunities')
+    .update({ next_action: nextAction, next_action_date: nextActionDate })
+    .eq('id', opportunityId)
+
+  if (error) return { error: error.message }
+  revalidatePath(`/opportunities/${opportunityId}`)
+  revalidatePath('/pipeline')
+  revalidatePath('/calendar')
+  return { success: true }
+}
+
 export async function addActivity(opportunityId: string, formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -350,6 +411,19 @@ export async function addActivity(opportunityId: string, formData: FormData) {
   })
 
   if (error) return { error: error.message }
+
+  // If a next action was provided alongside the activity, update it on the opportunity
+  const nextAction = formData.get('next_action') as string || null
+  const nextActionDate = formData.get('next_action_date') as string || null
+  if (nextAction || nextActionDate) {
+    await supabase
+      .from('opportunities')
+      .update({ next_action: nextAction, next_action_date: nextActionDate || null })
+      .eq('id', opportunityId)
+    revalidatePath('/pipeline')
+    revalidatePath('/calendar')
+  }
+
   revalidatePath(`/opportunities/${opportunityId}`)
   return { success: true }
 }
