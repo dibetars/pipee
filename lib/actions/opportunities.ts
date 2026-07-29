@@ -303,7 +303,7 @@ export async function clearStalled(opportunityId: string) {
 
   const { error } = await supabase
     .from('opportunities')
-    .update({ status: 'active' })
+    .update({ status: 'active', stage_entered_at: new Date().toISOString() })
     .eq('id', opportunityId)
 
   if (error) return { error: error.message }
