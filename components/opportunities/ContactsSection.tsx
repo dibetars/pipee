@@ -3,10 +3,10 @@
 import { useState, useTransition } from 'react'
 import {
   Plus, X, Loader2, Mail, Phone, Link as LinkIcon,
-  UserCheck, DollarSign, Users, User, Trash2,
+  UserCheck, DollarSign, Users, User, Trash2, Pencil, Check,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { addContact, deleteContact } from '@/lib/actions/opportunities'
+import { addContact, deleteContact, updateContact } from '@/lib/actions/opportunities'
 import type { Contact, ContactRole } from '@/types'
 
 const ROLE_META: Record<ContactRole, { label: string; color: string; bg: string; icon: React.ElementType }> = {
@@ -23,9 +23,10 @@ interface ContactsSectionProps {
 
 export function ContactsSection({ opportunityId, initialContacts }: ContactsSectionProps) {
   const [contacts, setContacts] = useState<Contact[]>(initialContacts)
-  const [showForm, setShowForm]   = useState(false)
+  const [showForm, setShowForm]     = useState(false)
+  const [editingId, setEditingId]   = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [error, setError]         = useState<string | null>(null)
+  const [error, setError]           = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const inp = 'w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500'
@@ -57,6 +58,29 @@ export function ContactsSection({ opportunityId, initialContacts }: ContactsSect
         setContacts(prev => [...prev, newContact])
         form.reset()
         setShowForm(false)
+      }
+    })
+  }
+
+  function handleEdit(e: React.FormEvent<HTMLFormElement>, contactId: string) {
+    e.preventDefault()
+    setError(null)
+    const fd = new FormData(e.currentTarget)
+    startTransition(async () => {
+      const result = await updateContact(opportunityId, contactId, fd)
+      if (result.error) {
+        setError(result.error)
+      } else {
+        setContacts(prev => prev.map(c => c.id !== contactId ? c : {
+          ...c,
+          name:         (fd.get('name')         as string) ?? c.name,
+          title:        (fd.get('title')        as string) || null,
+          role:         (fd.get('role')         as ContactRole) ?? c.role,
+          email:        (fd.get('email')        as string) || null,
+          phone:        (fd.get('phone')        as string) || null,
+          linkedin_url: (fd.get('linkedin_url') as string) || null,
+        }))
+        setEditingId(null)
       }
     })
   }
@@ -150,63 +174,115 @@ export function ContactsSection({ opportunityId, initialContacts }: ContactsSect
           const RoleIcon = meta.icon
           const isDeleting = deletingId === c.id
 
+          const isEditing = editingId === c.id
+
           return (
             <div
               key={c.id}
               className={cn(
-                'flex items-start gap-3 p-3 rounded-xl border transition-opacity',
+                'rounded-xl border transition-opacity',
                 meta.bg,
                 isDeleting && 'opacity-40'
               )}
             >
-              {/* Avatar */}
-              <div className="w-8 h-8 rounded-full bg-white border border-current/20 flex items-center justify-center text-sm font-semibold text-gray-700 shrink-0">
-                {c.name[0].toUpperCase()}
-              </div>
+              {isEditing ? (
+                <form onSubmit={e => handleEdit(e, c.id)} className="p-3 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="col-span-2">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Name *</label>
+                      <input name="name" required defaultValue={c.name} className={inp} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
+                      <input name="title" defaultValue={c.title ?? ''} placeholder="e.g. CFO" className={inp} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Role</label>
+                      <select name="role" defaultValue={c.role} className={inp}>
+                        <option value="champion">Champion</option>
+                        <option value="economic_buyer">Economic Buyer</option>
+                        <option value="stakeholder">Stakeholder</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                      <input name="email" type="email" defaultValue={c.email ?? ''} className={inp} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
+                      <input name="phone" defaultValue={c.phone ?? ''} className={inp} />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">LinkedIn URL</label>
+                      <input name="linkedin_url" defaultValue={c.linkedin_url ?? ''} className={inp} />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button type="button" onClick={() => setEditingId(null)} className="flex items-center gap-1 text-xs text-gray-500 border border-slate-200 rounded-lg px-2.5 py-1.5 hover:text-gray-700 bg-white">
+                      <X size={11} /> Cancel
+                    </button>
+                    <button type="submit" disabled={isPending} className="flex items-center gap-1 text-xs bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg px-2.5 py-1.5">
+                      {isPending ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />} Save
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex items-start gap-3 p-3 group">
+                  {/* Avatar */}
+                  <div className="w-8 h-8 rounded-full bg-white border border-current/20 flex items-center justify-center text-sm font-semibold text-gray-700 shrink-0">
+                    {c.name[0].toUpperCase()}
+                  </div>
 
-              {/* Details */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-gray-900 text-sm font-semibold">{c.name}</p>
-                  <span className={cn('flex items-center gap-1 text-[11px] font-medium', meta.color)}>
-                    <RoleIcon size={10} />
-                    {meta.label}
-                  </span>
+                  {/* Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-gray-900 text-sm font-semibold">{c.name}</p>
+                      <span className={cn('flex items-center gap-1 text-[11px] font-medium', meta.color)}>
+                        <RoleIcon size={10} />
+                        {meta.label}
+                      </span>
+                    </div>
+                    {c.title && <p className="text-gray-500 text-xs mt-0.5">{c.title}</p>}
+                    <div className="flex flex-wrap gap-3 mt-1.5">
+                      {c.email && (
+                        <a href={`mailto:${c.email}`} className="flex items-center gap-1 text-xs text-gray-500 hover:text-indigo-600 transition-colors">
+                          <Mail size={11} />{c.email}
+                        </a>
+                      )}
+                      {c.phone && (
+                        <a href={`tel:${c.phone}`} className="flex items-center gap-1 text-xs text-gray-500 hover:text-indigo-600 transition-colors">
+                          <Phone size={11} />{c.phone}
+                        </a>
+                      )}
+                      {c.linkedin_url && (
+                        <a href={c.linkedin_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-gray-500 hover:text-indigo-600 transition-colors">
+                          <LinkIcon size={11} />LinkedIn
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Edit / Delete */}
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <button
+                      onClick={() => { setEditingId(c.id); setError(null) }}
+                      title="Edit contact"
+                      className="text-gray-300 hover:text-indigo-500 transition-colors p-0.5"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(c.id)}
+                      disabled={isDeleting}
+                      title="Remove contact"
+                      className="text-gray-300 hover:text-red-400 transition-colors disabled:opacity-50 p-0.5"
+                    >
+                      {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                    </button>
+                  </div>
                 </div>
-                {c.title && <p className="text-gray-500 text-xs mt-0.5">{c.title}</p>}
-
-                {/* Contact links */}
-                <div className="flex flex-wrap gap-3 mt-1.5">
-                  {c.email && (
-                    <a href={`mailto:${c.email}`}
-                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-indigo-600 transition-colors">
-                      <Mail size={11} />{c.email}
-                    </a>
-                  )}
-                  {c.phone && (
-                    <a href={`tel:${c.phone}`}
-                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-indigo-600 transition-colors">
-                      <Phone size={11} />{c.phone}
-                    </a>
-                  )}
-                  {c.linkedin_url && (
-                    <a href={c.linkedin_url} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-indigo-600 transition-colors">
-                      <LinkIcon size={11} />LinkedIn
-                    </a>
-                  )}
-                </div>
-              </div>
-
-              {/* Delete */}
-              <button
-                onClick={() => handleDelete(c.id)}
-                disabled={isDeleting}
-                title="Remove contact"
-                className="text-gray-300 hover:text-red-400 transition-colors disabled:opacity-50 shrink-0"
-              >
-                {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-              </button>
+              )}
             </div>
           )
         })}

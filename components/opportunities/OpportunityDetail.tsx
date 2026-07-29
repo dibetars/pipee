@@ -7,7 +7,7 @@ import {
   Bell, ChevronRight, Lock, FileText, LayoutGrid, Pencil, Check, Loader2,
 } from 'lucide-react'
 import { cn, formatCurrency, formatDate, isStalled, isOverdue, daysSinceStageEntry } from '@/lib/utils'
-import { updateNextAction } from '@/lib/actions/opportunities'
+import { updateNextAction, clearStalled } from '@/lib/actions/opportunities'
 import { STAGE_META, SUB_STAGES } from '@/types'
 import { StageTag } from '@/components/shared/StageTag'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -78,6 +78,7 @@ export function OpportunityDetail({
   const [nextActionText, setNextActionText] = useState(opp.next_action ?? '')
   const [nextActionDate, setNextActionDate] = useState(opp.next_action_date ?? '')
   const [isPendingNextAction, startNextActionTransition] = useTransition()
+  const [isPendingClearStalled, startClearStalledTransition] = useTransition()
 
   const stalled      = isStalled(opp.stage, opp.stage_entered_at)
   const daysInStage  = daysSinceStageEntry(opp.stage_entered_at)
@@ -120,9 +121,15 @@ export function OpportunityDetail({
                 <StageTag stage={opp.stage} />
                 <StatusBadge status={opp.status} />
                 {stalled && (
-                  <span className="flex items-center gap-1 text-xs text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5">
-                    <AlertTriangle size={11} /> Stalled ({daysInStage}d)
-                  </span>
+                  <button
+                    disabled={isPendingClearStalled}
+                    onClick={() => startClearStalledTransition(async () => { await clearStalled(opp.id) })}
+                    title="Mark as active — clear stalled status"
+                    className="flex items-center gap-1 text-xs text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5 hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50"
+                  >
+                    {isPendingClearStalled ? <Loader2 size={11} className="animate-spin" /> : <AlertTriangle size={11} />}
+                    Stalled ({daysInStage}d) · Clear
+                  </button>
                 )}
               </div>
             </div>

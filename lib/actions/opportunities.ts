@@ -274,6 +274,54 @@ export async function deleteContact(opportunityId: string, contactId: string) {
   return { success: true }
 }
 
+export async function updateContact(opportunityId: string, contactId: string, formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const name = (formData.get('name') as string)?.trim()
+  if (!name) return { error: 'Name is required' }
+
+  const { error } = await supabase.from('contacts').update({
+    name,
+    title:        (formData.get('title') as string)?.trim()        || null,
+    role:         (formData.get('role')  as string)                || 'stakeholder',
+    email:        (formData.get('email') as string)?.trim()        || null,
+    phone:        (formData.get('phone') as string)?.trim()        || null,
+    linkedin_url: (formData.get('linkedin_url') as string)?.trim() || null,
+  }).eq('id', contactId)
+
+  if (error) return { error: error.message }
+  revalidatePath(`/opportunities/${opportunityId}`)
+  return { success: true }
+}
+
+export async function clearStalled(opportunityId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('opportunities')
+    .update({ status: 'active' })
+    .eq('id', opportunityId)
+
+  if (error) return { error: error.message }
+
+  await supabase.from('activities').insert({
+    opportunity_id: opportunityId,
+    user_id: user.id,
+    type: 'note',
+    title: 'Stalled status cleared',
+    occurred_at: new Date().toISOString(),
+  })
+
+  revalidatePath(`/opportunities/${opportunityId}`)
+  revalidatePath('/pipeline')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
 export async function saveMEDDIC(opportunityId: string, data: Record<string, string>) {
   const supabase = await createClient()
 

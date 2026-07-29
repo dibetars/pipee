@@ -77,15 +77,16 @@ export async function generatePptx(filters: ReportFilters): Promise<{ base64?: s
   const won        = opportunities.filter(o => o.status === 'won')
   const lost       = opportunities.filter(o => o.status === 'lost')
   const stalled    = opportunities.filter(o => o.status === 'stalled')
-  const totalVal   = active.reduce((s, o) => s + (o.value ?? 0), 0)
-  const wonVal     = won.reduce((s, o) => s + (o.value ?? 0), 0)
+  const dealVal    = (o: { value?: number | null; estimated_value?: number | null }) => o.value ?? o.estimated_value ?? 0
+  const totalVal   = active.reduce((s, o) => s + dealVal(o), 0)
+  const wonVal     = won.reduce((s, o) => s + dealVal(o), 0)
   const winRate    = (won.length + lost.length) > 0 ? Math.round((won.length / (won.length + lost.length)) * 100) : 0
 
   const byStage = [1,2,3,4,5,6,7].map(s => ({
     stage: s,
     name: STAGE_META[s]?.name ?? `Stage ${s}`,
     count: opportunities.filter(o => o.stage === s).length,
-    value: opportunities.filter(o => o.stage === s).reduce((a,o) => a + (o.value ?? 0), 0),
+    value: opportunities.filter(o => o.stage === s).reduce((a,o) => a + dealVal(o), 0),
   }))
 
   const byRep = profiles
@@ -97,13 +98,13 @@ export async function generatePptx(filters: ReportFilters): Promise<{ base64?: s
         active: ro.filter(o => o.status === 'active').length,
         won:    ro.filter(o => o.status === 'won').length,
         stalled:ro.filter(o => o.status === 'stalled').length,
-        pipeline: ro.reduce((s,o) => s + (o.value ?? 0), 0),
+        pipeline: ro.reduce((s,o) => s + dealVal(o), 0),
       }
     })
 
   const topDeals = [...opportunities]
-    .filter(o => o.value && o.value > 0)
-    .sort((a,b) => (b.value ?? 0) - (a.value ?? 0))
+    .filter(o => dealVal(o) > 0)
+    .sort((a,b) => dealVal(b) - dealVal(a))
     .slice(0, 8)
 
   const stalledDeals = opportunities.filter(o => o.status === 'stalled').slice(0, 6)
