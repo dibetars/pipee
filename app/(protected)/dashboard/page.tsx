@@ -7,6 +7,7 @@ import { PipelineMetrics } from '@/components/dashboard/PipelineMetrics'
 import { ConversionChart } from '@/components/dashboard/ConversionChart'
 import { BDOLeaderboard } from '@/components/dashboard/BDOLeaderboard'
 import { StalledDealsAlert } from '@/components/dashboard/StalledDealsAlert'
+import { TeamActivityFeed } from '@/components/dashboard/TeamActivityFeed'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -44,17 +45,21 @@ export default async function DashboardPage() {
           <p className="text-gray-400 text-sm">Here's your Pipee pipeline overview.</p>
         </div>
 
-        {/* First-time onboarding banner */}
+        {/* Onboarding banner */}
         <Link
-          href="/walkthrough"
+          href={profile.role === 'admin' ? '/admin/walkthrough' : '/walkthrough'}
           className="flex items-center gap-4 bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200 rounded-xl px-5 py-4 group hover:border-indigo-300 transition-colors"
         >
           <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0 shadow-sm shadow-indigo-200">
             <BookOpen size={18} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-900 text-sm">New to Pipee?</p>
-            <p className="text-xs text-gray-500 mt-0.5">Take the interactive walkthrough — learn the 7-stage pipeline, MEDDIC scoring, and how to move deals forward.</p>
+            <p className="font-semibold text-gray-900 text-sm">{profile.role === 'admin' ? 'Admin Guide' : 'New to Pipee?'}</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {profile.role === 'admin'
+                ? 'Learn how to monitor the team, manage stalled deals, and generate reports.'
+                : 'Take the interactive walkthrough — learn the 7-stage pipeline, MEDDIC scoring, and how to move deals forward.'}
+            </p>
           </div>
           <ArrowRight size={16} className="text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
         </Link>
@@ -67,7 +72,10 @@ export default async function DashboardPage() {
         </div>
 
         {profile.role === 'admin' && (
-          <BDOLeaderboard opportunities={visibleOpps} profiles={profiles ?? []} />
+          <>
+            <TeamActivityFeed opportunities={opportunities ?? []} profiles={profiles ?? []} />
+            <BDOLeaderboard opportunities={visibleOpps} profiles={profiles ?? []} />
+          </>
         )}
       </div>
     </div>

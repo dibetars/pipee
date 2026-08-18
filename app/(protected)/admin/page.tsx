@@ -1,4 +1,6 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { Shield, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { TopNav } from '@/components/shared/TopNav'
 import { UserManagement } from '@/components/admin/UserManagement'
@@ -28,6 +30,21 @@ export default async function AdminPage() {
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-6 py-6 space-y-8">
+
+          {/* ── Admin Guide banner ── */}
+          <Link
+            href="/admin/walkthrough"
+            className="flex items-center gap-4 bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200 rounded-xl px-5 py-4 group hover:border-indigo-300 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0 shadow-sm shadow-indigo-200">
+              <Shield size={18} className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-gray-900 text-sm">Admin Guide</p>
+              <p className="text-xs text-gray-500 mt-0.5">Learn how to manage the team, monitor the pipeline, handle stalled deals, and generate reports.</p>
+            </div>
+            <ArrowRight size={16} className="text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+          </Link>
 
           {/* ── User Management ── */}
           <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
