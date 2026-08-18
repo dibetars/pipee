@@ -45,14 +45,13 @@ export function UserManagement({ profiles }: UserManagementProps) {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h2 className="text-gray-900 font-semibold">Team Members</h2>
-          <p className="text-gray-400 text-sm">{bdReps.length}/3 BD reps configured</p>
+          <p className="text-gray-400 text-sm">{profiles.length} team member{profiles.length !== 1 ? 's' : ''}</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          disabled={bdReps.length >= 3}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         >
-          <Plus size={14} /> Add BD Rep
+          <Plus size={14} /> Add User
         </button>
       </div>
 
@@ -74,8 +73,10 @@ export function UserManagement({ profiles }: UserManagementProps) {
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Role</label>
-              <input name="role" value="bd_rep" readOnly
-                className="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-sm text-gray-400 cursor-not-allowed" />
+              <select name="role" defaultValue="bd_rep" className={inputCls}>
+                <option value="bd_rep">BD Rep</option>
+                <option value="admin">Admin</option>
+              </select>
             </div>
           </div>
           {error && <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
@@ -111,7 +112,7 @@ export function UserManagement({ profiles }: UserManagementProps) {
 
       {/* BD Reps */}
       <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">BD Reps ({bdReps.length}/3)</p>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">BD Reps ({bdReps.length})</p>
         <div className="space-y-2">
           {bdReps.map(p => (
             <div key={p.id} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg">
@@ -144,7 +145,7 @@ export function UserManagement({ profiles }: UserManagementProps) {
           ))}
           {bdReps.length === 0 && (
             <div className="text-center py-6 text-gray-400 text-sm">
-              No BD reps added yet. Add up to 3 above.
+              No BD reps added yet.
             </div>
           )}
         </div>
